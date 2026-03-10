@@ -683,6 +683,13 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                 }}>
                   ⚙ Filters{(minLifts > 0 || minRating > 0) ? ` (${[minLifts > 0 ? `${minLifts}+ lifts` : "", minRating > 0 ? `${minRating}+ ★` : ""].filter(Boolean).join(", ")})` : ""}
                 </button>
+                <button onClick={() => { setMinRating(4.3); setMinLifts(30); setShowFilters(false); }} style={{
+                  padding: "6px 14px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.body,
+                  border: `1px solid ${(minRating === 4.3 && minLifts === 30) ? t.colors.accentYellow : t.colors.borderSubtle}`,
+                  background: (minRating === 4.3 && minLifts === 30) ? "#2a1e00" : "transparent",
+                  color: (minRating === 4.3 && minLifts === 30) ? t.colors.accentYellow : t.colors.tabInactiveText,
+                  fontSize: t.fontSize.tabLabel,
+                }}>🏆 Top Resorts</button>
                 {(minLifts > 0 || minRating > 0) && (
                   <button onClick={() => { setMinLifts(0); setMinRating(0); }} style={{
                     padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.body,
