@@ -145,7 +145,7 @@ export const RESORTS: Resort[] = [
 
   { id: "serre_chevalier", name: "Serre Chevalier", country: "FR", lat: 44.9244, lng: 6.5444, composite_rating: 4.2, total_lifts: 61, total_runs: 61, km_of_runs: 250, elevation_m: 2200, summit_elevation_m: 2800, private_per_hour: 75, currency: "EUR",
     primary_airport: { code: "TRN", name: "Turin", distance_km: 110, transit_hours: 1.75, flight_mins: { LTN: 135, LHR: null, LGW: null, STN: 135 } },
-    alt_airports: [{ code: "GNB", name: "Grenoble", distance_km: 100, transit_hours: 1.75, flight_mins: { LTN: 115, LHR: null, LGW: 115, STN: null } }, { code: "MRS", name: "Marseille", distance_km: 240, transit_hours: 3.5, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }],
+    alt_airports: [{ code: "GNB", name: "Grenoble", distance_km: 100, transit_hours: 1.75, flight_mins: { LTN: 115, LHR: null, LGW: 115, STN: null } }, { code: "MRS", name: "Marseille", distance_km: 240, transit_hours: 3.5, flight_mins: { LTN: 120, LHR: 130, LGW: 120, STN: null } }],
     ski_schools: [{ name: "ESF Serre Chevalier", price_per_hour: 68, currency: "EUR" }, { name: "Evolution 2", price_per_hour: 75, currency: "EUR" }, { name: "Altitude Ski School", price_per_hour: 70, currency: "EUR" }],
     ski_pass: {day_1:48,day_3:128,day_6:228,season:820,currency:"EUR"},
     snow_data: {base_depth_cm: 70, summit_depth_cm: 290, avg_seasonal_cm: 620} },
@@ -174,7 +174,7 @@ export const RESORTS: Resort[] = [
 
   { id: "st_moritz", name: "St. Moritz", country: "CH", lat: 46.4983, lng: 9.8383, composite_rating: 4.7, total_lifts: 57, total_runs: 88, km_of_runs: 350, elevation_m: 2500, summit_elevation_m: 3303, private_per_hour: 170, currency: "CHF",
     primary_airport: { code: "ZRH", name: "Zurich", distance_km: 200, transit_hours: 3.0, flight_mins: { LTN: null, LHR: 110, LGW: 110, STN: null } },
-    alt_airports: [{ code: "BGY", name: "Milan Bergamo", distance_km: 190, transit_hours: 3.0, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: 130 } }, { code: "MXP", name: "Milan Malpensa", distance_km: 210, transit_hours: 3.25, flight_mins: { LTN: null, LHR: 130, LGW: null, STN: null } }],
+    alt_airports: [{ code: "BGY", name: "Milan Bergamo", distance_km: 190, transit_hours: 3.0, flight_mins: { LTN: null, LHR: null, LGW: 130, STN: 130 } }, { code: "MXP", name: "Milan Malpensa", distance_km: 210, transit_hours: 3.25, flight_mins: { LTN: null, LHR: 130, LGW: null, STN: null } }],
     ski_schools: [{ name: "Ski School St. Moritz", price_per_hour: 160, currency: "CHF" }, { name: "Swiss Ski School", price_per_hour: 175, currency: "CHF" }, { name: "Stoked Engadin", price_per_hour: 168, currency: "CHF" }],
     ski_pass: {day_1:80,day_3:212,day_6:378,season:1350,currency:"CHF"},
     snow_data: {base_depth_cm: 75, summit_depth_cm: 310, avg_seasonal_cm: 660} },
@@ -245,7 +245,7 @@ export const RESORTS: Resort[] = [
 
   { id: "solden", name: "Sölden", country: "AT", lat: 46.9594, lng: 11.0044, composite_rating: 4.5, total_lifts: 33, total_runs: 33, km_of_runs: 146, elevation_m: 2700, summit_elevation_m: 3250, private_per_hour: 95, currency: "EUR",
     primary_airport: { code: "INN", name: "Innsbruck", distance_km: 90, transit_hours: 1.5, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: null } },
-    alt_airports: [{ code: "MUC", name: "Munich", distance_km: 210, transit_hours: 3.0, flight_mins: { LTN: null, LHR: 130, LGW: 130, STN: null } }, { code: "BGY", name: "Milan Bergamo", distance_km: 240, transit_hours: 3.5, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: 130 } }],
+    alt_airports: [{ code: "MUC", name: "Munich", distance_km: 210, transit_hours: 3.0, flight_mins: { LTN: null, LHR: 130, LGW: 130, STN: null } }, { code: "BGY", name: "Milan Bergamo", distance_km: 240, transit_hours: 3.5, flight_mins: { LTN: null, LHR: null, LGW: 130, STN: 130 } }],
     ski_schools: [{ name: "Ski School Sölden", price_per_hour: 88, currency: "EUR" }, { name: "Ötztaler Ski School", price_per_hour: 95, currency: "EUR" }, { name: "Alpin Sölden", price_per_hour: 90, currency: "EUR" }],
     ski_pass: {day_1:58,day_3:155,day_6:278,season:990,currency:"EUR"},
     snow_data: {base_depth_cm: 90, summit_depth_cm: 370, avg_seasonal_cm: 780} },
@@ -315,7 +315,7 @@ export const RESORTS: Resort[] = [
 
   // ── ITALY ─────────────────────────────────────────────────────────────────
   { id: "cortina", name: "Cortina d'Ampezzo", country: "IT", lat: 46.5406, lng: 12.1358, composite_rating: 4.5, total_lifts: 52, total_runs: 52, km_of_runs: 140, elevation_m: 2400, summit_elevation_m: 2930, private_per_hour: 90, currency: "EUR",
-    primary_airport: { code: "VCE", name: "Venice", distance_km: 160, transit_hours: 2.25, flight_mins: { LTN: 140, LHR: null, LGW: 140, STN: 140 } },
+    primary_airport: { code: "VCE", name: "Venice", distance_km: 160, transit_hours: 2.25, flight_mins: { LTN: 140, LHR: 140, LGW: 140, STN: null } },
     alt_airports: [{ code: "TSF", name: "Treviso", distance_km: 145, transit_hours: 2.0, flight_mins: { LTN: null, LHR: null, LGW: null, STN: 140 } }, { code: "INN", name: "Innsbruck", distance_km: 130, transit_hours: 2.0, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: null } }],
     ski_schools: [{ name: "Scuola Sci Cortina", price_per_hour: 82, currency: "EUR" }, { name: "Cortina Ski School", price_per_hour: 92, currency: "EUR" }, { name: "Azzurra Cortina", price_per_hour: 86, currency: "EUR" }],
     ski_pass: {day_1:52,day_3:138,day_6:248,season:880,currency:"EUR"},
@@ -329,35 +329,35 @@ export const RESORTS: Resort[] = [
     snow_data: {base_depth_cm: 90, summit_depth_cm: 350, avg_seasonal_cm: 700} },
 
   { id: "madonna_campiglio", name: "Madonna di Campiglio", country: "IT", lat: 46.2333, lng: 10.8167, composite_rating: 4.4, total_lifts: 60, total_runs: 60, km_of_runs: 150, elevation_m: 2200, summit_elevation_m: 2442, private_per_hour: 85, currency: "EUR",
-    primary_airport: { code: "BGY", name: "Milan Bergamo", distance_km: 165, transit_hours: 2.5, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: 130 } },
-    alt_airports: [{ code: "TRN", name: "Turin", distance_km: 245, transit_hours: 3.5, flight_mins: { LTN: 135, LHR: null, LGW: null, STN: 135 } }, { code: "VRN", name: "Verona", distance_km: 140, transit_hours: 2.0, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }],
+    primary_airport: { code: "VRN", name: "Verona", distance_km: 140, transit_hours: 2.0, flight_mins: { LTN: null, LHR: 135, LGW: null, STN: null } },
+    alt_airports: [{ code: "BGY", name: "Milan Bergamo", distance_km: 165, transit_hours: 2.5, flight_mins: { LTN: null, LHR: null, LGW: 130, STN: 130 } }, { code: "TRN", name: "Turin", distance_km: 245, transit_hours: 3.5, flight_mins: { LTN: 135, LHR: null, LGW: null, STN: 135 } }],
     ski_schools: [{ name: "Scuola Sci Campiglio", price_per_hour: 78, currency: "EUR" }, { name: "Madonna Ski School", price_per_hour: 88, currency: "EUR" }, { name: "Dolomiti Ski School", price_per_hour: 82, currency: "EUR" }],
     ski_pass: {day_1:52,day_3:138,day_6:248,season:880,currency:"EUR"},
     snow_data: {base_depth_cm: 60, summit_depth_cm: 240, avg_seasonal_cm: 520} },
 
   { id: "val_gardena", name: "Val Gardena", country: "IT", lat: 46.5578, lng: 11.7761, composite_rating: 4.5, total_lifts: 80, total_runs: 80, km_of_runs: 175, elevation_m: 2200, summit_elevation_m: 2519, private_per_hour: 85, currency: "EUR",
     primary_airport: { code: "INN", name: "Innsbruck", distance_km: 110, transit_hours: 1.75, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: null } },
-    alt_airports: [{ code: "BZO", name: "Bolzano", distance_km: 45, transit_hours: 0.75, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }, { code: "VRN", name: "Verona", distance_km: 175, transit_hours: 2.5, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }],
+    alt_airports: [{ code: "BZO", name: "Bolzano", distance_km: 45, transit_hours: 0.75, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }, { code: "VRN", name: "Verona", distance_km: 175, transit_hours: 2.5, flight_mins: { LTN: null, LHR: 135, LGW: null, STN: null } }],
     ski_schools: [{ name: "Scuola Sci Val Gardena", price_per_hour: 78, currency: "EUR" }, { name: "Ortisei Ski School", price_per_hour: 88, currency: "EUR" }, { name: "Dolomiti Ski", price_per_hour: 82, currency: "EUR" }],
     ski_pass: {day_1:54,day_3:142,day_6:255,season:910,currency:"EUR"},
     snow_data: {base_depth_cm: 50, summit_depth_cm: 220, avg_seasonal_cm: 460} },
 
   { id: "alta_badia", name: "Alta Badia", country: "IT", lat: 46.5906, lng: 11.9433, composite_rating: 4.4, total_lifts: 53, total_runs: 53, km_of_runs: 130, elevation_m: 2200, summit_elevation_m: 2778, private_per_hour: 80, currency: "EUR",
     primary_airport: { code: "INN", name: "Innsbruck", distance_km: 120, transit_hours: 2.0, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: null } },
-    alt_airports: [{ code: "BZO", name: "Bolzano", distance_km: 60, transit_hours: 1.0, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }, { code: "VRN", name: "Verona", distance_km: 185, transit_hours: 2.75, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }],
+    alt_airports: [{ code: "BZO", name: "Bolzano", distance_km: 60, transit_hours: 1.0, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }, { code: "VRN", name: "Verona", distance_km: 185, transit_hours: 2.75, flight_mins: { LTN: null, LHR: 135, LGW: null, STN: null } }],
     ski_schools: [{ name: "Scuola Sci Alta Badia", price_per_hour: 72, currency: "EUR" }, { name: "La Villa Ski School", price_per_hour: 82, currency: "EUR" }, { name: "Corvara Ski School", price_per_hour: 76, currency: "EUR" }],
     ski_pass: {day_1:52,day_3:138,day_6:248,season:880,currency:"EUR"},
     snow_data: {base_depth_cm: 45, summit_depth_cm: 200, avg_seasonal_cm: 420} },
 
   { id: "selva_gardena", name: "Selva / Sella Ronda", country: "IT", lat: 46.5561, lng: 11.7600, composite_rating: 4.5, total_lifts: 175, total_runs: 175, km_of_runs: 550, elevation_m: 2200, summit_elevation_m: 2519, private_per_hour: 85, currency: "EUR",
     primary_airport: { code: "INN", name: "Innsbruck", distance_km: 115, transit_hours: 1.75, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: null } },
-    alt_airports: [{ code: "BZO", name: "Bolzano", distance_km: 50, transit_hours: 0.75, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }, { code: "VRN", name: "Verona", distance_km: 178, transit_hours: 2.5, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }],
+    alt_airports: [{ code: "BZO", name: "Bolzano", distance_km: 50, transit_hours: 0.75, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }, { code: "VRN", name: "Verona", distance_km: 178, transit_hours: 2.5, flight_mins: { LTN: null, LHR: 135, LGW: null, STN: null } }],
     ski_schools: [{ name: "Scuola Sci Selva", price_per_hour: 78, currency: "EUR" }, { name: "Sella Ronda Ski School", price_per_hour: 88, currency: "EUR" }, { name: "Wolkenstein Ski", price_per_hour: 82, currency: "EUR" }],
     ski_pass: {day_1:54,day_3:142,day_6:255,season:910,currency:"EUR"},
     snow_data: {base_depth_cm: 55, summit_depth_cm: 220, avg_seasonal_cm: 460} },
 
   { id: "livigno", name: "Livigno", country: "IT", lat: 46.5369, lng: 10.1369, composite_rating: 4.4, total_lifts: 115, total_runs: 115, km_of_runs: 115, elevation_m: 2700, summit_elevation_m: 2798, private_per_hour: 80, currency: "EUR",
-    primary_airport: { code: "BGY", name: "Milan Bergamo", distance_km: 215, transit_hours: 3.0, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: 130 } },
+    primary_airport: { code: "BGY", name: "Milan Bergamo", distance_km: 215, transit_hours: 3.0, flight_mins: { LTN: null, LHR: null, LGW: 130, STN: 130 } },
     alt_airports: [{ code: "ZRH", name: "Zurich", distance_km: 230, transit_hours: 3.25, flight_mins: { LTN: null, LHR: 110, LGW: 110, STN: null } }, { code: "MXP", name: "Milan Malpensa", distance_km: 220, transit_hours: 3.0, flight_mins: { LTN: null, LHR: 130, LGW: null, STN: null } }],
     ski_schools: [{ name: "Scuola Sci Livigno", price_per_hour: 72, currency: "EUR" }, { name: "Livigno Ski School", price_per_hour: 82, currency: "EUR" }, { name: "Azzurra Ski", price_per_hour: 76, currency: "EUR" }],
     ski_pass: {day_1:48,day_3:126,day_6:225,season:800,currency:"EUR"},
@@ -379,7 +379,7 @@ export const RESORTS: Resort[] = [
 
   { id: "kronplatz", name: "Kronplatz", country: "IT", lat: 46.7383, lng: 11.9467, composite_rating: 4.4, total_lifts: 31, total_runs: 31, km_of_runs: 119, elevation_m: 2200, summit_elevation_m: 2275, private_per_hour: 80, currency: "EUR",
     primary_airport: { code: "INN", name: "Innsbruck", distance_km: 125, transit_hours: 2.0, flight_mins: { LTN: 130, LHR: null, LGW: 130, STN: null } },
-    alt_airports: [{ code: "BZO", name: "Bolzano", distance_km: 55, transit_hours: 1.0, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }, { code: "VRN", name: "Verona", distance_km: 185, transit_hours: 2.75, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }],
+    alt_airports: [{ code: "BZO", name: "Bolzano", distance_km: 55, transit_hours: 1.0, flight_mins: { LTN: null, LHR: null, LGW: null, STN: null } }, { code: "VRN", name: "Verona", distance_km: 185, transit_hours: 2.75, flight_mins: { LTN: null, LHR: 135, LGW: null, STN: null } }],
     ski_schools: [{ name: "Scuola Sci Plan de Corones", price_per_hour: 72, currency: "EUR" }, { name: "Kronplatz Ski School", price_per_hour: 82, currency: "EUR" }, { name: "Pustertal Ski", price_per_hour: 76, currency: "EUR" }],
     ski_pass: {day_1:52,day_3:138,day_6:248,season:880,currency:"EUR"},
     snow_data: {base_depth_cm: 55, summit_depth_cm: 230, avg_seasonal_cm: 480} },
