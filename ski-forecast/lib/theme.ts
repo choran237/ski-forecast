@@ -70,7 +70,7 @@ export const theme = {
     textPrimary:      "#f0f9ff",
     textSecondary:    "#94a3b8",
     textMuted:        "#94a3b8",
-    textFaint:        "#334155",
+    textFaint:        "#94a3b8",
 
     // Accents
     accentBlue:       "#38bdf8",
