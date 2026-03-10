@@ -3,27 +3,25 @@ import { Resort, ResortSnapshot, DayForecast } from "./resorts";
 
 const FIELDS = "snowfall_sum,snow_depth_max,precipitation_probability_max,temperature_2m_max,temperature_2m_min";
 
-async function fetchSnowDepthAtElevation(lat: number, lng: number, elevation: number): Promise<number> {
-  const url =
-    `https://api.open-meteo.com/v1/forecast` +
-    `?latitude=${lat}&longitude=${lng}` +
-    `&elevation=${elevation}` +
-    `&daily=snow_depth_max` +
-    `&forecast_days=1&timezone=auto`;
-
-  try {
-    const res = await fetch(url, { next: { revalidate: 0 } });
-    if (!res.ok) return 0;
-    const data = await res.json();
-    const raw = data.daily?.snow_depth_max?.[0] ?? 0;
-    return Math.round((raw ?? 0) * 100); // metres → cm
-  } catch {
-    return 0;
-  }
+// Open-Meteo ignores the &elevation= override for snow_depth — it uses its own DEM
+// and snaps to the actual terrain at that lat/lng. So fetching at the same coords
+// with a different elevation just returns the same terrain-based value.
+//
+// Instead we estimate summit snow depth using an elevation-based scaling factor.
+// Snow depth increases with altitude due to:
+//   - Lower temps (less melt): ~0.6°C per 100m lapse rate
+//   - Orographic enhancement of precipitation at higher elevations
+// Empirically, ski resorts typically see 1.3–1.8x more snow depth at summit vs mid-mountain.
+// We use a conservative 1.4x per 1000m above base, capped at 2.5x.
+function estimateSummitDepth(baseDepthCm: number, baseElevationM: number, summitElevationM: number): number {
+  if (baseDepthCm <= 0) return 0;
+  const elevationGainM = Math.max(0, summitElevationM - baseElevationM);
+  const scaleFactor = Math.min(2.5, 1 + (elevationGainM / 1000) * 0.4);
+  return Math.round(baseDepthCm * scaleFactor);
 }
 
 export async function fetchResortForecast(resort: Resort): Promise<ResortSnapshot> {
-  // Primary fetch: forecast at mid-mountain elevation (base depth)
+  // Single fetch at mid-mountain elevation
   const url =
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${resort.lat}&longitude=${resort.lng}` +
@@ -47,13 +45,10 @@ export async function fetchResortForecast(resort: Resort): Promise<ResortSnapsho
   }));
 
   const total = days.reduce((s, d) => s + d.snowfall_cm, 0);
+  const baseDepth = days[0]?.snow_depth_cm ?? 0;
 
-  // Secondary fetch: snow depth at summit elevation
-  const summitDepth = await fetchSnowDepthAtElevation(
-    resort.lat,
-    resort.lng,
-    resort.summit_elevation_m
-  );
+  // Estimate summit depth from base using elevation lapse scaling
+  const summitDepth = estimateSummitDepth(baseDepth, resort.elevation_m, resort.summit_elevation_m);
 
   return {
     resort_id:        resort.id,
