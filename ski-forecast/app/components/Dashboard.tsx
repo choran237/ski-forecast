@@ -2,6 +2,7 @@
 // app/components/Dashboard.tsx
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { ForecastRun, ResortSnapshot } from "@/lib/resorts";
 import { RESORTS } from "@/lib/resorts";
 import { theme as t } from "@/lib/theme";
@@ -208,14 +209,22 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate }
   const liftsPercent = Math.round((resort.lifts.open / resort.lifts.total) * 100);
   const resortMeta = RESORTS.find(r => r.id === resort.resort_id);
 
+  const router = useRouter();
+
   return (
-    <div style={{
-      background: t.colors.cardBg,
-      border: `1px solid ${isFav ? t.colors.accentYellow + "55" : t.colors.borderActive}`,
-      borderRadius: t.card.borderRadius, padding: t.card.padding,
-      display: "flex", flexDirection: "column", gap: t.card.gap,
-      transition: "border-color 0.2s",
-    }}>
+    <div
+      onClick={() => router.push(`/resort/${resort.resort_id}`)}
+      style={{
+        background: t.colors.cardBg,
+        border: `1px solid ${isFav ? t.colors.accentYellow + "55" : t.colors.borderActive}`,
+        borderRadius: t.card.borderRadius, padding: t.card.padding,
+        display: "flex", flexDirection: "column", gap: t.card.gap,
+        transition: "border-color 0.2s, box-shadow 0.2s",
+        cursor: "pointer",
+      }}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 0 0 1px ${t.colors.accentBlue}44`)}
+      onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
