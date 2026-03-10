@@ -188,7 +188,7 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData }:
       )}
       <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
         <button
-          onClick={e => { e.stopPropagation(); fetchPrice(); }}
+          onClick={fetchPrice}
           disabled={loading}
           style={{
             flex: 1, padding: "6px 0", borderRadius: 8, border: "none",
@@ -198,7 +198,7 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData }:
             cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body,
           }}
         >{loading ? "Checking…" : data ? "↻ Refresh" : "Get Price"}</button>
-        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{
+        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" style={{
           padding: "6px 10px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`,
           background: "transparent", color: t.colors.textSecondary,
           fontSize: t.fontSize.flightSub, textDecoration: "none", display: "flex", alignItems: "center",
