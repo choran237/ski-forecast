@@ -2,19 +2,16 @@
 import { Redis } from "@upstash/redis";
 import { ForecastRun } from "./resorts";
 
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
+
 const KEY = "ski:history";
 const MAX_RUNS = 6;
 
-function getRedis() {
-  return new Redis({
-    url: process.env.KV_REST_API_URL!,
-    token: process.env.KV_REST_API_TOKEN!,
-  });
-}
-
 export async function getHistory(): Promise<ForecastRun[]> {
   try {
-    const redis = getRedis();
     const data = await redis.get<ForecastRun[]>(KEY);
     return data ?? [];
   } catch {
@@ -38,13 +35,10 @@ function runsAreIdentical(a: ForecastRun, b: ForecastRun): boolean {
 }
 
 export async function appendRun(run: ForecastRun): Promise<{ history: ForecastRun[]; stored: boolean }> {
-  const redis = getRedis();
   const history = await getHistory();
-
   if (history.length > 0 && runsAreIdentical(run, history[0])) {
     return { history, stored: false };
   }
-
   const updated = [run, ...history].slice(0, MAX_RUNS);
   await redis.set(KEY, updated);
   return { history: updated, stored: true };
