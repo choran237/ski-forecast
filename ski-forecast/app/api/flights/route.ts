@@ -90,6 +90,10 @@ export async function GET(req: NextRequest) {
     );
 
     const firstFlight = cheapest.flights?.[0];
+    // total_duration is at the itinerary level; fall back to summing legs
+    const durationMins = cheapest.total_duration
+      ?? cheapest.flights?.reduce((sum: number, f: any) => sum + (f.duration ?? 0), 0)
+      ?? null;
     const result = {
       ok: true,
       price: cheapest.price,
@@ -97,7 +101,7 @@ export async function GET(req: NextRequest) {
       airline: firstFlight?.airline ?? null,
       airline_logo: firstFlight?.airline_logo ?? null,
       stops: cheapest.flights ? cheapest.flights.length - 1 : 0,
-      duration_mins: cheapest.total_duration ?? null,
+      duration_mins: durationMins,
       depart_date: departDate,
       return_date: returnDate,
       price_level: serpData.price_insights?.price_level ?? null,

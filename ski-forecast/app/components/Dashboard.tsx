@@ -170,7 +170,7 @@ function FlightBox({ airportCode, airportName, departDate, returnDate }: {
             )}
           </div>
           <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted, marginTop: 2 }}>
-            {data.airline} · Direct
+            {data.airline} · Direct{data.duration_mins ? ` · ${formatDuration(data.duration_mins)}` : ""}
           </div>
           <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textFaint, marginTop: 1 }}>
             {data.cached ? "Cached" : "Live"} · {new Date(data.fetched_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
