@@ -564,6 +564,14 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
 
+  // On mount, always fetch fresh history so deltas are correct on first load
+  useEffect(() => {
+    fetch("/api/history")
+      .then(r => r.json())
+      .then(d => { if (d.history?.length > 0) setHistory(d.history); })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetch("/api/favourites").then(r => r.json()).then(d => { if (d.ok) setFavourites(d.favourites); }).catch(() => {});
   }, []);
