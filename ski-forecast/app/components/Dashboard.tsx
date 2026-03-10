@@ -153,8 +153,11 @@ function FlightBox({ airportCode, airportName, departDate, returnDate }: {
 
   return (
     <div style={{ background: t.colors.flightBg, border: `1px solid ${t.colors.flightBorder}`, borderRadius: t.card.statRadius, padding: t.card.statPadding }}>
-      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6 }}>
-        ✈ FLIGHTS · LHR → {airportCode}
+      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>✈ FLIGHTS · LHR → {airportCode}</span>
+        {data?.duration_mins && (
+          <span style={{ color: t.colors.textFaint, fontFamily: t.fonts.mono }}>{formatDuration(data.duration_mins)}</span>
+        )}
       </div>
       {data ? (
         <div>
@@ -167,8 +170,7 @@ function FlightBox({ airportCode, airportName, departDate, returnDate }: {
             )}
           </div>
           <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted, marginTop: 2 }}>
-            {data.airline} · {data.stops === 0 ? "Direct" : `${data.stops} stop`}
-            {data.duration_mins ? ` · ${formatDuration(data.duration_mins)}` : ""}
+            {data.airline} · Direct
           </div>
           <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textFaint, marginTop: 1 }}>
             {data.cached ? "Cached" : "Live"} · {new Date(data.fetched_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}

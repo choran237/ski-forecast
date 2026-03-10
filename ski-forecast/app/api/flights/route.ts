@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
       hl: "en",
       gl: "uk",
       type: "1", // round trip
+      stops: "0", // direct flights only
       api_key: SERP_API_KEY,
     });
 
@@ -78,10 +79,10 @@ export async function GET(req: NextRequest) {
     const allFlights = [
       ...(serpData.best_flights ?? []),
       ...(serpData.other_flights ?? []),
-    ];
+    ].filter((f: any) => !f.flights || f.flights.length <= 1); // direct only
 
     if (allFlights.length === 0) {
-      return NextResponse.json({ ok: false, error: "No flights found" });
+      return NextResponse.json({ ok: false, error: "No direct flights found" });
     }
 
     const cheapest = allFlights.reduce((a: any, b: any) =>
