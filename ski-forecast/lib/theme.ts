@@ -69,7 +69,7 @@ export const theme = {
     // Text
     textPrimary:      "#f0f9ff",
     textSecondary:    "#94a3b8",
-    textMuted:        "#475569",
+    textMuted:        "#94a3b8",
     textFaint:        "#334155",
 
     // Accents
