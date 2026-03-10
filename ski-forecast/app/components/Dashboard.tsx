@@ -129,8 +129,6 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
 }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [flightsLoading, setFlightsLoading] = useState(false);
-  const [flightsDone, setFlightsDone] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const cacheKey = `flight:${airportCode}:${departDate}:${returnDate}`;
 
