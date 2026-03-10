@@ -47,6 +47,40 @@ function StarRating({ score }: { score: number }) {
       ))}
       <span style={{ fontSize: t.fontSize.badge, color: t.colors.textMuted, marginLeft: 4 }}>{score}</span>
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -61,6 +95,40 @@ function FavStar({ isFav, onToggle }: { isFav: boolean; onToggle: () => void }) 
         lineHeight: 1, transition: "color 0.2s",
       }}
     >★</button>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -81,6 +149,40 @@ function SnowBar({ days, color }: { days: any[]; color: string }) {
         </div>
       ))}
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -98,6 +200,40 @@ function Delta({ current, previous }: { current: string; previous?: string }) {
     }}>
       {zero ? "—" : `${diff > 0 ? "▲" : "▼"} ${abs} cm`}
     </span>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -115,6 +251,40 @@ function StatBox({ label, value, sub, barPct, barColor }: {
         </div>
       )}
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -124,6 +294,13 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
 }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [flightsLoading, setFlightsLoading] = useState(false);
+  const [flightsDone, setFlightsDone] = useState(0);
+  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
+  const [flightPwInput, setFlightPwInput] = useState("");
+  const [flightPwError, setFlightPwError] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [error, setError] = useState<string | null>(null);
   const cacheKey = `flight:${airportCode}:${departDate}:${returnDate}`;
 
@@ -159,11 +336,16 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
   return (
     <div style={{ background: t.colors.flightBg, border: `1px solid ${t.colors.flightBorder}`, borderRadius: t.card.statRadius, padding: t.card.statPadding }}>
       <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span>✈ FLIGHTS · LHR → {airportCode}</span>
+        <span>✈ FLIGHTS · {data?.departure ?? "LHR"} → {airportCode}</span>
         <span style={{ color: t.colors.textFaint, fontFamily: t.fonts.mono }}>
           {formatDuration(data?.duration_mins ?? defaultFlightMins ?? null)}
         </span>
       </div>
+      {data?.cheaper_alt && (
+        <div style={{ fontSize: 9, color: t.colors.accentYellow, marginBottom: 4 }}>
+          💡 {data.cheaper_alt.departure} is £{data.cheaper_alt.saving} cheaper
+        </div>
+      )}
       {data ? (
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -205,6 +387,40 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
         }}>Sky ↗</a>
       </div>
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -340,6 +556,40 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
         );
       })()}
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -374,6 +624,40 @@ function FavouritesStrip({ latest, favourites, onToggleFav }: {
         ))}
       </div>
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -444,6 +728,40 @@ function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly }
         )}
       </div>
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -557,6 +875,40 @@ function TableView({ latest, prev, favourites, onToggleFav, displayCurrency }: {
         </tbody>
       </table>
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -599,6 +951,40 @@ function HistoryPanel({ history }: { history: ForecastRun[] }) {
         ))}
       </div>
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -607,6 +993,13 @@ type ViewMode = "cards" | "table";
 export default function Dashboard({ initialHistory }: { initialHistory: ForecastRun[] }) {
   const [history, setHistory] = useState<ForecastRun[]>(initialHistory);
   const [loading, setLoading] = useState(false);
+  const [flightsLoading, setFlightsLoading] = useState(false);
+  const [flightsDone, setFlightsDone] = useState(0);
+  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
+  const [flightPwInput, setFlightPwInput] = useState("");
+  const [flightPwError, setFlightPwError] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("cards");
@@ -661,6 +1054,27 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
     finally { setLoading(false); }
   }, []);
 
+  const fetchAllFlights = useCallback(async () => {
+    if (!departDate || !returnDate) return;
+    setFlightsLoading(true); setFlightsDone(0);
+    const airports = [...new Set(RESORTS.map(r => r.primary_airport.code))];
+    for (let i = 0; i < airports.length; i++) {
+      const code = airports[i];
+      try {
+        const res = await fetch(`/api/flights?airport=${code}&depart=${departDate}&return=${returnDate}`);
+        const json = await res.json();
+        if (json.ok) {
+          try { sessionStorage.setItem(`flight:${code}:${departDate}:${returnDate}`, JSON.stringify(json)); } catch {}
+        }
+      } catch {}
+      setFlightsDone(i + 1);
+      await new Promise(r => setTimeout(r, 300));
+    }
+    setFlightsLoading(false);
+    // Force re-render so FlightBoxes pick up new sessionStorage data
+    setHistory(h => [...h]);
+  }, [departDate, returnDate]);
+
   const latest = history[0];
   const previous = history[1];
 
@@ -675,7 +1089,7 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: t.colors.pageBg, paddingBottom: 60 }}>
+    <div style={{ minHeight: "100vh", background: t.colors.pageBg, paddingBottom: 60 }} onClick={() => setCalendarTarget(null)}>
       <div style={{ background: t.colors.headerBg, borderBottom: `1px solid ${t.colors.borderSubtle}`, padding: "20px 32px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
@@ -691,11 +1105,63 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
               </div>
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted, position: "relative" }}>
                 <span>✈ Depart</span>
-                <input type="date" value={departDate} onChange={e => setDepartDate(e.target.value)} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }} />
+                <button onClick={() => { const d = new Date(departDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(t2 => t2 === "depart" ? null : "depart"); }} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer", minWidth: 100 }}>
+                  📅 {departDate ? new Date(departDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "Pick date"}
+                </button>
                 <span>Return</span>
-                <input type="date" value={returnDate} min={departDate} onChange={e => setReturnDate(e.target.value)} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }} />
+                <button onClick={() => { const d = new Date(returnDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(t2 => t2 === "return" ? null : "return"); }} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer", minWidth: 100 }}>
+                  📅 {returnDate ? new Date(returnDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "Pick date"}
+                </button>
+                {calendarTarget && (() => {
+                  const { year, month } = calendarMonth;
+                  const firstDay = new Date(year, month, 1).getDay();
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  const blanks = (firstDay + 6) % 7;
+                  const today = new Date(); today.setHours(0,0,0,0);
+                  const selected = calendarTarget === "depart" ? departDate : returnDate;
+                  const minDate = calendarTarget === "return" ? departDate : undefined;
+                  const monthName = new Date(year, month).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+                  const cells = [];
+                  for (let i = 0; i < blanks; i++) cells.push(null);
+                  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+                  return (
+                    <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "110%", left: 0, zIndex: 100, background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 12, padding: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 280 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16, padding: "2px 8px" }}>‹</button>
+                        <span style={{ color: "#e2e8f0", fontWeight: 600, fontSize: 13 }}>{monthName}</span>
+                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16, padding: "2px 8px" }}>›</button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 6 }}>
+                        {["Mo","Tu","We","Th","Fr","Sa","Su"].map(d => <div key={d} style={{ textAlign: "center", fontSize: 10, color: "#4a6a8a", padding: "2px 0", fontWeight: 600 }}>{d}</div>)}
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+                        {cells.map((day, i) => {
+                          if (!day) return <div key={i} />;
+                          const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+                          const cellDate = new Date(year, month, day);
+                          const isPast = cellDate < today;
+                          const isBeforeMin = minDate && dateStr < minDate;
+                          const isSelected = dateStr === selected;
+                          const isInRange = departDate && returnDate && dateStr > departDate && dateStr < returnDate;
+                          const disabled = isPast || isBeforeMin;
+                          return (
+                            <button key={i} disabled={!!disabled} onClick={() => {
+                              if (calendarTarget === "depart") { setDepartDate(dateStr); if (returnDate && dateStr >= returnDate) setReturnDate(""); }
+                              else setReturnDate(dateStr);
+                              setCalendarTarget(null);
+                            }} style={{ padding: "6px 0", borderRadius: 6, border: "none", textAlign: "center", fontSize: 12, cursor: disabled ? "default" : "pointer", fontFamily: "inherit",
+                              background: isSelected ? "#3b82f6" : isInRange ? "#1e3a5f" : "transparent",
+                              color: disabled ? "#2a4060" : isSelected ? "#fff" : "#c8dff0",
+                              fontWeight: isSelected ? 700 : 400,
+                            }}>{day}</button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <select
                 value={displayCurrency}
@@ -707,6 +1173,9 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
               <a href="/api/export-csv" style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`, background: "transparent", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, textDecoration: "none", fontFamily: t.fonts.body, opacity: latest ? 1 : 0.4 }}>↓ CSV</a>
               <button onClick={refresh} disabled={loading} style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: loading ? t.colors.refreshBtnDisabled : t.colors.refreshBtn, color: loading ? t.colors.textMuted : "#fff", fontSize: t.fontSize.subtext, fontWeight: 600, cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body }}>
                 {loading ? "⟳ Fetching…" : "⟳ Refresh"}
+              </button>
+              <button onClick={() => { setFlightPwInput(""); setFlightPwError(false); setShowFlightPwModal(true); }} disabled={flightsLoading} style={{ padding: "7px 18px", borderRadius: 8, border: "1px solid #4ade8040", background: flightsLoading ? t.colors.refreshBtnDisabled : "#0a4a2a", color: flightsLoading ? t.colors.textMuted : "#4ade80", fontSize: t.fontSize.subtext, fontWeight: 600, cursor: flightsLoading ? "wait" : "pointer", fontFamily: t.fonts.body }}>
+                {flightsLoading ? `✈ ${flightsDone}/${[...new Set(RESORTS.map(r => r.primary_airport.code))].length}…` : "✈ Get All Prices"}
               </button>
             </div>
           </div>
@@ -873,5 +1342,39 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
         )}
       </div>
     </div>
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }

@@ -20,7 +20,7 @@ export async function fetchResortForecast(resort: Resort): Promise<ResortSnapsho
   const days: DayForecast[] = d.time.map((date: string, i: number) => ({
     date,
     snowfall_cm:  Math.round((d.snowfall_sum[i]                    ?? 0) * 10) / 10,
-    snow_depth_cm: Math.round((d.snow_depth_max[i]                 ?? 0) * 10) / 10,
+    snow_depth_cm: Math.round((d.snow_depth_max[i]                 ?? 0) * 100),
     precip_prob:  d.precipitation_probability_max[i]               ?? 0,
     temp_max:     Math.round((d.temperature_2m_max[i]              ?? 0) * 10) / 10,
     temp_min:     Math.round((d.temperature_2m_min[i]              ?? 0) * 10) / 10,
