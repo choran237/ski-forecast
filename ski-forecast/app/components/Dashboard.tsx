@@ -11,7 +11,7 @@ import { Currency, CURRENCY_OPTIONS, formatPrice } from "@/lib/currency";
 const MAX_HISTORY = 6;
 
 const FLAG: Record<string, string> = {
-  CH: "🇨🇭", FR: "🇫🇷", AT: "🇦🇹", IT: "🇮🇹", NO: "🇳🇴", SE: "🇸🇪",
+  CH: "🇨🇭", FR: "🇫🇷", AT: "🇦🇹", IT: "🇮🇹", NO: "🇳🇴", SE: "🇸🇪", AD: "🇦🇩", ES: "🇪🇸", AD: "🇦🇩", ES: "🇪🇸",
 };
 
 function nextFriday(): string {
