@@ -497,8 +497,8 @@ function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly }
 type TableSort = "snow" | "rating" | "lifts" | "depth";
 type TableDir = "asc" | "desc";
 
-function TableView({ latest, prev, favourites, onToggleFav, displayCurrency }: {
-  latest: ForecastRun; prev?: ForecastRun; favourites: string[]; onToggleFav: (id: string) => void; displayCurrency: string;
+function TableView({ latest, prev, favourites, onToggleFav, displayCurrency, arrivalAirportFilter }: {
+  latest: ForecastRun; prev?: ForecastRun; favourites: string[]; onToggleFav: (id: string) => void; displayCurrency: string; arrivalAirportFilter: string;
 }) {
   const router = useRouter();
   const [sort, setSort] = useState<TableSort>("snow");
@@ -509,7 +509,12 @@ function TableView({ latest, prev, favourites, onToggleFav, displayCurrency }: {
     else { setSort(col); setDir("desc"); }
   };
 
-  const sorted = [...latest.resorts].sort((a, b) => {
+  const sorted = [...latest.resorts].filter(r => {
+    if (!arrivalAirportFilter) return true;
+    const meta = RESORTS.find(x => x.id === r.resort_id);
+    if (!meta) return true;
+    return [meta.primary_airport, ...meta.alt_airports].some(ap => ap.code === arrivalAirportFilter);
+  }).sort((a, b) => {
     let av = 0, bv = 0;
     if (sort === "snow") { av = parseFloat(a.forecast.total_7day_snow_cm); bv = parseFloat(b.forecast.total_7day_snow_cm); }
     if (sort === "rating") { av = a.composite_rating; bv = b.composite_rating; }
@@ -668,6 +673,7 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [minKmRuns, setMinKmRuns] = useState(0);
   const [maxTransitHours, setMaxTransitHours] = useState(0);
   const [maxFlightHours, setMaxFlightHours] = useState(0);
+  const [arrivalAirportFilter, setArrivalAirportFilter] = useState<string>("");
   const [preferredDeparture, setPreferredDeparture] = useState<LondonAirport>("LTN");
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
@@ -862,8 +868,30 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                   color: (minRating === 4.3 && minLifts === 30) ? t.colors.accentYellow : t.colors.tabInactiveText,
                   fontSize: t.fontSize.tabLabel,
                 }}>🏆 Top Resorts</button>
-                {(minLifts > 0 || minRating > 0 || minKmRuns > 0 || maxTransitHours > 0 || maxFlightHours > 0) && (
-                  <button onClick={() => { setMinLifts(0); setMinRating(0); setMinKmRuns(0); setMaxTransitHours(0); setMaxFlightHours(0); }} style={{
+                {/* Arrival airport filter */}
+                <select
+                  value={arrivalAirportFilter}
+                  onChange={e => setArrivalAirportFilter(e.target.value)}
+                  style={{
+                    padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.mono,
+                    border: `1px solid ${arrivalAirportFilter ? t.colors.accentBlue : t.colors.borderSubtle}`,
+                    background: arrivalAirportFilter ? "#0a1f35" : t.colors.statBg,
+                    color: arrivalAirportFilter ? t.colors.accentBlue : t.colors.tabInactiveText,
+                    fontSize: t.fontSize.tabLabel, outline: "none", appearance: "none", WebkitAppearance: "none",
+                    paddingRight: 28, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center",
+                  }}
+                >
+                  <option value="">✈ All Airports</option>
+                  {Array.from(new Set(
+                    RESORTS.flatMap(r => [r.primary_airport, ...r.alt_airports].map(a => a.code + "|" + a.name))
+                  )).sort().map(entry => {
+                    const [code, name] = entry.split("|");
+                    return <option key={code} value={code}>{code} – {name}</option>;
+                  })}
+                </select>
+                {(minLifts > 0 || minRating > 0 || minKmRuns > 0 || maxTransitHours > 0 || maxFlightHours > 0 || arrivalAirportFilter) && (
+                  <button onClick={() => { setMinLifts(0); setMinRating(0); setMinKmRuns(0); setMaxTransitHours(0); setMaxFlightHours(0); setArrivalAirportFilter(""); }} style={{
                     padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.body,
                     border: `1px solid ${t.colors.borderSubtle}`, background: "transparent",
                     color: t.colors.textMuted, fontSize: t.fontSize.tabLabel,
@@ -940,6 +968,10 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                       if (r.composite_rating < minRating) return false;
                       if (meta && minKmRuns > 0 && meta.km_of_runs < minKmRuns) return false;
                       if (meta && maxTransitHours > 0 && meta.primary_airport.transit_hours > maxTransitHours) return false;
+                      if (meta && arrivalAirportFilter) {
+                        const allAps = [meta.primary_airport, ...meta.alt_airports];
+                        if (!allAps.some(ap => ap.code === arrivalAirportFilter)) return false;
+                      }
                       return true;
                     })
                     .sort((a, b) => {
@@ -966,7 +998,7 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                 })()}
               </>
             ) : (
-              <TableView latest={latest} prev={previous} favourites={favourites} onToggleFav={toggleFav} displayCurrency={displayCurrency} />
+              <TableView latest={latest} prev={previous} favourites={favourites} onToggleFav={toggleFav} displayCurrency={displayCurrency} arrivalAirportFilter={arrivalAirportFilter} />
             )}
             <HistoryPanel history={history} />
             <div style={{ display: "flex", gap: 20, fontSize: t.fontSize.subtext, color: t.colors.textMuted, paddingTop: 10, borderTop: `1px solid ${t.colors.borderSubtle}`, flexWrap: "wrap" }}>
