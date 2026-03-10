@@ -233,7 +233,7 @@ function FlightBox({ routes, departDate, returnDate, onBestData, preferredDepart
         </div>
       )}
       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-        <button onClick={fetchAll} disabled={loading} style={{
+        <button onClick={(e) => { e.stopPropagation(); fetchAll(); }} disabled={loading} style={{
           flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
           background: loading ? t.colors.flightBtnLoading : t.colors.flightBtn,
           color: loading ? t.colors.textMuted : "#fff",
@@ -242,7 +242,7 @@ function FlightBox({ routes, departDate, returnDate, onBestData, preferredDepart
         }}>
           {loading ? "⟳ Checking…" : "⟳ Refresh"}
         </button>
-        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" style={{
+        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{
           padding: "8px 14px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`,
           background: "transparent", color: t.colors.textSecondary,
           fontSize: t.fontSize.subtext, textDecoration: "none",
