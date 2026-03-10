@@ -162,7 +162,7 @@ function FlightBox({ routes, departDate, returnDate, onBestData, preferredDepart
   // Find best result: direct-only, prefer chosen departure airport, then cheapest direct
   const LONDON_PRIORITY = ["LTN", "LHR", "LGW", "STN"];
   const directPrices = Object.entries(prices).filter(([, data]) =>
-    data?.price && (data.stops === 0 || data.stops == null)
+    data?.price && data.stops === 0
   );
   // Sort: preferred departure first, then by price
   const sorted = [...directPrices].sort(([keyA, dataA], [keyB, dataB]) => {
@@ -372,13 +372,16 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
               </div>
             </div>
             <FlightBox
-              airportCode={resortMeta.primary_airport.code}
-              airportName={resortMeta.primary_airport.name}
+              routes={[resortMeta.primary_airport, ...resortMeta.alt_airports].flatMap(ap => {
+                const fm = ap.flight_mins as Record<string, number | null>;
+                return (["LTN","LHR","LGW","STN"] as const)
+                  .filter(lon => fm[lon] != null)
+                  .map(lon => ({ londonCode: lon, destCode: ap.code, destName: ap.name, flightMins: fm[lon]! }));
+              })}
               departDate={departDate}
               returnDate={returnDate}
-              onData={setFlightData}
-              defaultFlightMins={bestDep?.mins}
-              departureAirport={activeDeparture}
+              onBestData={(d, lon, dest) => setFlightData(d)}
+              preferredDeparture={preferredDeparture}
             />
           </>
         );
