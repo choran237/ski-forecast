@@ -307,7 +307,7 @@ function FavouritesStrip({ latest, favourites, onToggleFav }: {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: t.fontSize.favStrip, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading }}>
-                {FLAG[r.country]} {r.resort_name.split(" ")[0]}
+                {FLAG[r.country]} {r.resort_name}
               </span>
               <FavStar isFav={true} onToggle={() => onToggleFav(r.resort_id)} />
             </div>
@@ -324,10 +324,12 @@ function FavouritesStrip({ latest, favourites, onToggleFav }: {
 
 type Top6Sort = "snow" | "rating" | "lifts";
 
-function Top6Widget({ latest, favourites }: { latest: ForecastRun; favourites: string[] }) {
-  const [sort, setSort] = useState<Top6Sort>("snow");
-  const [favsOnly, setFavsOnly] = useState(false);
-
+function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly, onExpand, expanded }: {
+  latest: ForecastRun; favourites: string[];
+  sort: Top6Sort; setSort: (s: Top6Sort) => void;
+  favsOnly: boolean; setFavsOnly: (v: boolean | ((b: boolean) => boolean)) => void;
+  onExpand: () => void; expanded: boolean;
+}) {
   let resorts = favsOnly ? latest.resorts.filter(r => favourites.includes(r.resort_id)) : [...latest.resorts];
   resorts = resorts.sort((a, b) => {
     if (sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
@@ -348,17 +350,24 @@ function Top6Widget({ latest, favourites }: { latest: ForecastRun; favourites: s
     <div style={{ background: t.colors.top6Bg, border: `1px solid ${t.colors.borderSubtle}`, borderRadius: t.card.borderRadius, padding: t.card.padding }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
         <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase" }}>🏆 Top 6 Resorts</div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <SortBtn s="snow" label="❄ Snow" />
           <SortBtn s="rating" label="★ Rating" />
           <SortBtn s="lifts" label="⛷ Lifts" />
-          <button onClick={() => setFavsOnly(f => !f)} style={{
+          <button onClick={() => setFavsOnly((f: boolean) => !f)} style={{
             padding: "4px 10px", borderRadius: 8,
             border: `1px solid ${favsOnly ? t.colors.accentYellow : t.colors.borderSubtle}`,
             background: favsOnly ? "#2a1e00" : "transparent",
             color: favsOnly ? t.colors.accentYellow : t.colors.tabInactiveText,
             fontSize: t.fontSize.tabLabel, cursor: "pointer", fontFamily: t.fonts.body,
           }}>★ Favs only</button>
+          <button onClick={onExpand} style={{
+            padding: "4px 10px", borderRadius: 8,
+            border: `1px solid ${expanded ? t.colors.accentBlue : t.colors.borderSubtle}`,
+            background: expanded ? "#0a1f35" : "transparent",
+            color: expanded ? t.colors.accentBlue : t.colors.tabInactiveText,
+            fontSize: t.fontSize.tabLabel, cursor: "pointer", fontFamily: t.fonts.body,
+          }}>{expanded ? "▲ Collapse" : "▼ Expand"}</button>
         </div>
       </div>
       <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
@@ -374,7 +383,7 @@ function Top6Widget({ latest, favourites }: { latest: ForecastRun; favourites: s
               <span style={{ fontSize: 14 }}>{FLAG[r.country]}</span>
             </div>
             <div style={{ fontSize: t.fontSize.top6Title, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading, lineHeight: 1.2 }}>
-              {r.resort_name.split(" ")[0]}
+              {r.resort_name}
             </div>
             <div style={{ fontSize: t.fontSize.top6Snow, fontWeight: 800, color: t.colors.accentBlue, fontFamily: t.fonts.mono }}>
               {parseFloat(r.forecast.total_7day_snow_cm).toFixed(1)}<span style={{ fontSize: 10, color: t.colors.textMuted }}> cm</span>
@@ -538,6 +547,9 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [notice, setNotice] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("cards");
   const [favourites, setFavourites] = useState<string[]>([]);
+  const [top6Sort, setTop6Sort] = useState<Top6Sort>("snow");
+  const [top6FavsOnly, setTop6FavsOnly] = useState(false);
+  const [top6Expanded, setTop6Expanded] = useState(false);
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
 
@@ -624,23 +636,63 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
         {latest ? (
           <>
             <FavouritesStrip latest={latest} favourites={favourites} onToggleFav={toggleFav} />
-            <Top6Widget latest={latest} favourites={favourites} />
+            <Top6Widget
+              latest={latest} favourites={favourites}
+              sort={top6Sort} setSort={setTop6Sort}
+              favsOnly={top6FavsOnly} setFavsOnly={setTop6FavsOnly}
+              onExpand={() => setTop6Expanded(e => !e)} expanded={top6Expanded}
+            />
             <div style={{ display: "flex", gap: 6, background: t.colors.statBg, padding: 4, borderRadius: 10, alignSelf: "flex-start", border: `1px solid ${t.colors.borderSubtle}` }}>
               <TabBtn v="cards" label="⊞ Cards" />
               <TabBtn v="table" label="≡ Table" />
             </div>
             {view === "cards" ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18 }}>
-                {latest.resorts.map(resort => (
-                  <ResortCard
-                    key={resort.resort_id} resort={resort}
-                    prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
-                    isFav={favourites.includes(resort.resort_id)}
-                    onToggleFav={() => toggleFav(resort.resort_id)}
-                    departDate={departDate} returnDate={returnDate}
-                  />
-                ))}
-              </div>
+              <>
+                {top6Expanded && (() => {
+                  let top6Resorts = top6FavsOnly ? latest.resorts.filter(r => favourites.includes(r.resort_id)) : [...latest.resorts];
+                  top6Resorts = top6Resorts.sort((a, b) => {
+                    if (top6Sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
+                    if (top6Sort === "rating") return b.composite_rating - a.composite_rating;
+                    return b.lifts.total - a.lifts.total;
+                  }).slice(0, 6);
+                  return (
+                    <div>
+                      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.accentBlue, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>
+                        🏆 Top 6 — expanded view
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18, marginBottom: 28 }}>
+                        {top6Resorts.map(resort => (
+                          <ResortCard
+                            key={resort.resort_id} resort={resort}
+                            prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
+                            isFav={favourites.includes(resort.resort_id)}
+                            onToggleFav={() => toggleFav(resort.resort_id)}
+                            departDate={departDate} returnDate={returnDate}
+                          />
+                        ))}
+                      </div>
+                      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>
+                        All resorts
+                      </div>
+                    </div>
+                  );
+                })()}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18 }}>
+                  {[...latest.resorts].sort((a, b) => {
+                    if (top6Sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
+                    if (top6Sort === "rating") return b.composite_rating - a.composite_rating;
+                    return b.lifts.total - a.lifts.total;
+                  }).map(resort => (
+                    <ResortCard
+                      key={resort.resort_id} resort={resort}
+                      prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
+                      isFav={favourites.includes(resort.resort_id)}
+                      onToggleFav={() => toggleFav(resort.resort_id)}
+                      departDate={departDate} returnDate={returnDate}
+                    />
+                  ))}
+                </div>
+              </>
             ) : (
               <TableView latest={latest} prev={previous} favourites={favourites} onToggleFav={toggleFav} />
             )}
