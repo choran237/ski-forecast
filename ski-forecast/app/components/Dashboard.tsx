@@ -555,7 +555,7 @@ function TableView({ latest, prev, favourites, onToggleFav, displayCurrency }: {
             const prevResort = prev?.resorts.find(x => x.resort_id === r.resort_id);
             const snowDiff = prevResort ? parseFloat(r.forecast.total_7day_snow_cm) - parseFloat(prevResort.forecast.total_7day_snow_cm) : null;
             return (
-              <tr key={r.resort_id} onClick={() => router.push(`/resort/${r.resort_id}`)} style={{ background: i % 2 === 0 ? t.colors.tableBg : t.colors.historyRowBg, borderTop: `1px solid ${t.colors.borderSubtle}`, cursor: "pointer" }} onMouseEnter={e => (e.currentTarget.style.background = t.colors.cardHoverBg ?? t.colors.statBg)} onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? t.colors.tableBg : t.colors.historyRowBg)}>
+              <tr key={r.resort_id} onClick={() => router.push(`/resort/${r.resort_id}`)} style={{ background: i % 2 === 0 ? t.colors.tableBg : t.colors.historyRowBg, borderTop: `1px solid ${t.colors.borderSubtle}`, cursor: "pointer" }} onMouseEnter={e => (e.currentTarget.style.background = t.colors.statBg)} onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? t.colors.tableBg : t.colors.historyRowBg)}>
                 <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
                   <span style={{ fontSize: t.fontSize.tableCell, fontWeight: 600, color: t.colors.textPrimary, fontFamily: t.fonts.heading }}>{FLAG[r.country]} {r.resort_name}</span>
                 </td>
