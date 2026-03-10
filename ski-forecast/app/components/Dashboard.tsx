@@ -730,7 +730,7 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <span style={{ fontSize: 28 }}>⛷️</span>
               <div>
-                <h1 style={{ margin: 0, fontSize: t.fontSize.appTitle, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading }}>London Powder Hunter</h1>
+                <h1 style={{ margin: 0, fontSize: t.fontSize.appTitle, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading }}>London Powder</h1>
                 <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, marginTop: 2 }}>
                   {latest
                     ? <>Last run: <strong style={{ color: t.colors.textSecondary }}>{new Date(latest.fetched_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</strong> · {MAX_HISTORY - history.length} slots remaining</>

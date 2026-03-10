@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "London Powder Hunter",
+  title: "London Powder",
   description: "Live snow forecasts, ratings & lesson prices for top ski resorts",
 };
 
