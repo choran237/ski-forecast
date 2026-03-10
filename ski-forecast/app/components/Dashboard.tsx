@@ -160,9 +160,9 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData }:
     <div style={{ background: t.colors.flightBg, border: `1px solid ${t.colors.flightBorder}`, borderRadius: t.card.statRadius, padding: t.card.statPadding }}>
       <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span>✈ FLIGHTS · LHR → {airportCode}</span>
-        {data?.duration_mins && (
-          <span style={{ color: t.colors.textFaint, fontFamily: t.fonts.mono }}>{formatDuration(data.duration_mins)}</span>
-        )}
+        <span style={{ color: t.colors.textFaint, fontFamily: t.fonts.mono }}>
+          {formatDuration(data?.duration_mins ?? resortMeta?.primary_airport.flight_mins ?? null)}
+        </span>
       </div>
       {data ? (
         <div>
@@ -298,8 +298,8 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
         const pctOfAvg = avg > 0 ? Math.round((current7day / avg) * 100) : 0;
         const depthNow = next_3_days[0]?.snow_depth_cm ?? 0;
         const transitHrs = resortMeta.primary_airport.transit_hours;
-        const flightMins = flightData?.duration_mins ?? null;
-        const totalHrs = flightMins ? ((flightMins / 60) + transitHrs).toFixed(1) : null;
+        const flightMins = flightData?.duration_mins ?? resortMeta.primary_airport.flight_mins;
+        const totalHrs = ((flightMins / 60) + transitHrs).toFixed(1);
         return (
           <>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -320,11 +320,11 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
               </div>
               <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
                 <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>DOOR-DOOR</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: !totalHrs ? t.colors.textMuted : parseFloat(totalHrs) <= 4 ? t.colors.accentGreen : parseFloat(totalHrs) <= 6 ? t.colors.accentYellow : t.colors.textPrimary, fontFamily: t.fonts.mono }}>
-                  {totalHrs ? <>{totalHrs}<span style={{ fontSize: 10, color: t.colors.textMuted }}>h</span></> : <span style={{ fontSize: 10, color: t.colors.textMuted }}>{transitHrs}h ground</span>}
+                <div style={{ fontSize: 13, fontWeight: 700, color: parseFloat(totalHrs) <= 4 ? t.colors.accentGreen : parseFloat(totalHrs) <= 6 ? t.colors.accentYellow : t.colors.textPrimary, fontFamily: t.fonts.mono }}>
+                  {totalHrs}<span style={{ fontSize: 10, color: t.colors.textMuted }}>h</span>
                 </div>
                 <div style={{ fontSize: 9, color: t.colors.textFaint }}>
-                  {flightMins ? `${Math.floor(flightMins/60)}h${flightMins%60}m ✈ + ${transitHrs}h 🚗` : "get price for total"}
+                  {Math.floor(flightMins/60)}h{flightMins%60}m ✈ + {transitHrs}h 🚗
                 </div>
               </div>
             </div>
