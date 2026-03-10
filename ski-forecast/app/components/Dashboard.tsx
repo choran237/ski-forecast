@@ -118,9 +118,9 @@ function StatBox({ label, value, sub, barPct, barColor }: {
   );
 }
 
-function FlightBox({ airportCode, airportName, departDate, returnDate, onData }: {
+function FlightBox({ airportCode, airportName, departDate, returnDate, onData, defaultFlightMins }: {
   airportCode: string; airportName: string; departDate: string; returnDate: string;
-  onData?: (d: any) => void;
+  onData?: (d: any) => void; defaultFlightMins?: number;
 }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -161,7 +161,7 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData }:
       <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span>✈ FLIGHTS · LHR → {airportCode}</span>
         <span style={{ color: t.colors.textFaint, fontFamily: t.fonts.mono }}>
-          {formatDuration(data?.duration_mins ?? resortMeta?.primary_airport.flight_mins ?? null)}
+          {formatDuration(data?.duration_mins ?? defaultFlightMins ?? null)}
         </span>
       </div>
       {data ? (
@@ -188,7 +188,7 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData }:
       )}
       <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
         <button
-          onClick={fetchPrice}
+          onClick={e => { e.stopPropagation(); fetchPrice(); }}
           disabled={loading}
           style={{
             flex: 1, padding: "6px 0", borderRadius: 8, border: "none",
@@ -198,7 +198,7 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData }:
             cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body,
           }}
         >{loading ? "Checking…" : data ? "↻ Refresh" : "Get Price"}</button>
-        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" style={{
+        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{
           padding: "6px 10px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`,
           background: "transparent", color: t.colors.textSecondary,
           fontSize: t.fontSize.flightSub, textDecoration: "none", display: "flex", alignItems: "center",
@@ -334,6 +334,7 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
               departDate={departDate}
               returnDate={returnDate}
               onData={setFlightData}
+              defaultFlightMins={resortMeta.primary_airport.flight_mins}
             />
           </>
         );
