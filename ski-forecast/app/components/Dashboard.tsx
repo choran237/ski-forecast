@@ -1,37 +1,79 @@
 "use client";
 // app/components/Dashboard.tsx
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ForecastRun, ResortSnapshot } from "@/lib/resorts";
+import { RESORTS } from "@/lib/resorts";
+import { theme as t } from "@/lib/theme";
 
 const MAX_HISTORY = 6;
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+const FLAG: Record<string, string> = {
+  CH: "🇨🇭", FR: "🇫🇷", AT: "🇦🇹", IT: "🇮🇹", NO: "🇳🇴", SE: "🇸🇪",
+};
+
+function nextFriday(): string {
+  const d = new Date();
+  const day = d.getDay();
+  const daysUntilFriday = (5 - day + 7) % 7 || 7;
+  d.setDate(d.getDate() + daysUntilFriday);
+  return d.toISOString().split("T")[0];
+}
+
+function sundayAfter(dateStr: string): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + 2);
+  return d.toISOString().split("T")[0];
+}
+
+function priceLevelColor(level: string | null) {
+  if (level === "low") return t.colors.priceLow;
+  if (level === "high") return t.colors.priceHigh;
+  return t.colors.priceTypical;
+}
+
+function formatDuration(mins: number | null) {
+  if (!mins) return null;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
 
 function StarRating({ score }: { score: number }) {
   return (
     <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
       {[1,2,3,4,5].map(i => (
-        <span key={i} style={{ fontSize: 13, color: i <= Math.round(score) ? "#fbbf24" : "#1e293b" }}>★</span>
+        <span key={i} style={{ fontSize: 13, color: i <= Math.round(score) ? t.colors.accentYellow : t.colors.borderSubtle }}>★</span>
       ))}
-      <span style={{ fontSize: 11, color: "#64748b", marginLeft: 4 }}>{score}</span>
+      <span style={{ fontSize: t.fontSize.badge, color: t.colors.textMuted, marginLeft: 4 }}>{score}</span>
     </div>
+  );
+}
+
+function FavStar({ isFav, onToggle }: { isFav: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      title={isFav ? "Remove from favourites" : "Add to favourites"}
+      style={{
+        background: "none", border: "none", cursor: "pointer", padding: "2px 4px",
+        fontSize: 18, color: isFav ? t.colors.favActive : t.colors.favInactive,
+        lineHeight: 1, transition: "color 0.2s",
+      }}
+    >★</button>
   );
 }
 
 function SnowBar({ days, color }: { days: any[]; color: string }) {
   const max = Math.max(...days.map(d => d.snowfall_cm), 1);
   return (
-    <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 44 }}>
+    <div style={{ display: "flex", gap: t.bars.gap, alignItems: "flex-end", height: t.bars.height }}>
       {days.map((d, i) => (
         <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
           <div style={{
-            width: "100%", borderRadius: 3,
-            height: Math.max(4, (d.snowfall_cm / max) * 38),
-            background: color, opacity: 0.9,
-            transition: "height 0.5s ease",
+            width: "100%", borderRadius: t.bars.radius,
+            height: Math.max(t.bars.minBarHeight, (d.snowfall_cm / max) * t.bars.maxBarHeight),
+            background: color, opacity: 0.9, transition: "height 0.5s ease",
           }} />
-          <span style={{ fontSize: 9, color: "#64748b", fontFamily: "monospace" }}>
+          <span style={{ fontSize: t.fontSize.barValue, color: t.colors.textSecondary, fontFamily: t.fonts.mono }}>
             {d.snowfall_cm.toFixed(0)}
           </span>
         </div>
@@ -47,112 +89,223 @@ function Delta({ current, previous }: { current: string; previous?: string }) {
   const zero = Math.abs(diff) < 0.1;
   return (
     <span style={{
-      fontSize: 11, marginLeft: 6, padding: "1px 7px", borderRadius: 99,
-      background: zero ? "#1e293b" : diff > 0 ? "#052e16" : "#450a0a",
-      color: zero ? "#64748b" : diff > 0 ? "#4ade80" : "#f87171",
-      fontFamily: "monospace",
+      fontSize: t.fontSize.badge, marginLeft: 6, padding: "2px 8px", borderRadius: 99,
+      background: zero ? t.colors.borderSubtle : diff > 0 ? "#052e16" : "#450a0a",
+      color: zero ? t.colors.textMuted : diff > 0 ? t.colors.accentGreen : t.colors.accentRed,
+      fontFamily: t.fonts.mono,
     }}>
       {zero ? "—" : `${diff > 0 ? "▲" : "▼"} ${abs} cm`}
     </span>
   );
 }
 
-function ResortCard({ resort, prev }: { resort: ResortSnapshot; prev?: ResortSnapshot }) {
+function StatBox({ label, value, sub, barPct, barColor }: {
+  label: string; value: React.ReactNode; sub: string; barPct?: number; barColor?: string;
+}) {
+  return (
+    <div style={{ background: t.colors.statBg, borderRadius: t.card.statRadius, padding: t.card.statPadding }}>
+      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: t.fontSize.statValue, fontWeight: 700, fontFamily: t.fonts.mono, color: t.colors.textPrimary }}>{value}</div>
+      <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, marginTop: 2 }}>{sub}</div>
+      {barPct !== undefined && (
+        <div style={{ marginTop: 6, height: 3, borderRadius: 2, background: t.colors.borderSubtle }}>
+          <div style={{ height: "100%", width: `${barPct}%`, background: barColor, borderRadius: 2, transition: "width 0.5s ease" }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FlightBox({ airportCode, airportName, departDate, returnDate }: {
+  airportCode: string; airportName: string; departDate: string; returnDate: string;
+}) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const cacheKey = `flight:${airportCode}:${departDate}:${returnDate}`;
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(cacheKey);
+      if (stored) setData(JSON.parse(stored));
+    } catch {}
+  }, [cacheKey]);
+
+  const fetchPrice = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/flights?airport=${airportCode}&depart=${departDate}&return=${returnDate}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "No flights found");
+      setData(json);
+      try { sessionStorage.setItem(cacheKey, JSON.stringify(json)); } catch {}
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [airportCode, departDate, returnDate, cacheKey]);
+
+  const skyscannerUrl = `https://www.skyscanner.net/transport/flights/lhr/${airportCode.toLowerCase()}/${departDate.replace(/-/g,"").slice(2)}/${returnDate.replace(/-/g,"").slice(2)}/?adults=1&currency=GBP`;
+
+  return (
+    <div style={{ background: t.colors.flightBg, border: `1px solid ${t.colors.flightBorder}`, borderRadius: t.card.statRadius, padding: t.card.statPadding }}>
+      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6 }}>
+        ✈ FLIGHTS · LHR → {airportCode}
+      </div>
+      {data ? (
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span style={{ fontSize: t.fontSize.flightPrice, fontWeight: 800, fontFamily: t.fonts.mono, color: priceLevelColor(data.price_level) }}>
+              £{data.price}
+            </span>
+            {data.price_level && (
+              <span style={{ fontSize: t.fontSize.badge, color: priceLevelColor(data.price_level) }}>{data.price_level}</span>
+            )}
+          </div>
+          <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted, marginTop: 2 }}>
+            {data.airline} · {data.stops === 0 ? "Direct" : `${data.stops} stop`}
+            {data.duration_mins ? ` · ${formatDuration(data.duration_mins)}` : ""}
+          </div>
+          <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textFaint, marginTop: 1 }}>
+            {data.cached ? "Cached" : "Live"} · {new Date(data.fetched_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+          </div>
+        </div>
+      ) : error ? (
+        <div style={{ fontSize: t.fontSize.subtext, color: t.colors.accentRed }}>{error}</div>
+      ) : (
+        <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>{airportName} · tap to check price</div>
+      )}
+      <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+        <button
+          onClick={fetchPrice}
+          disabled={loading}
+          style={{
+            flex: 1, padding: "6px 0", borderRadius: 8, border: "none",
+            background: loading ? t.colors.flightBtnLoading : t.colors.flightBtn,
+            color: loading ? t.colors.textMuted : "#fff",
+            fontSize: t.fontSize.flightSub, fontWeight: 600,
+            cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body,
+          }}
+        >{loading ? "Checking…" : data ? "↻ Refresh" : "Get Price"}</button>
+        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" style={{
+          padding: "6px 10px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`,
+          background: "transparent", color: t.colors.textSecondary,
+          fontSize: t.fontSize.flightSub, textDecoration: "none", display: "flex", alignItems: "center",
+        }}>Sky ↗</a>
+      </div>
+    </div>
+  );
+}
+
+function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate }: {
+  resort: ResortSnapshot; prev?: ResortSnapshot;
+  isFav: boolean; onToggleFav: () => void;
+  departDate: string; returnDate: string;
+}) {
   const { next_3_days, following_4_days, total_7day_snow_cm } = resort.forecast;
   const liftsPercent = Math.round((resort.lifts.open / resort.lifts.total) * 100);
+  const resortMeta = RESORTS.find(r => r.id === resort.resort_id);
 
   return (
     <div style={{
-      background: "linear-gradient(135deg,#0f172a 0%,#1a2744 100%)",
-      border: "1px solid #1e3a5f", borderRadius: 16,
-      padding: "20px 22px", display: "flex", flexDirection: "column", gap: 14,
-      position: "relative", overflow: "hidden",
+      background: t.colors.cardBg,
+      border: `1px solid ${isFav ? t.colors.accentYellow + "55" : t.colors.borderActive}`,
+      borderRadius: t.card.borderRadius, padding: t.card.padding,
+      display: "flex", flexDirection: "column", gap: t.card.gap,
+      transition: "border-color 0.2s",
     }}>
-      <div style={{
-        position: "absolute", top: -50, right: -50, width: 130, height: 130,
-        borderRadius: "50%", background: "rgba(56,189,248,0.05)", pointerEvents: "none",
-      }} />
-
-      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{
-              fontSize: 10, fontWeight: 600, letterSpacing: 1, padding: "2px 7px",
-              borderRadius: 6, background: "#1e293b", color: "#64748b",
-            }}>{resort.country}</span>
-            <h3 style={{
-              fontSize: 17, fontWeight: 700, color: "#f0f9ff",
-              fontFamily: "'DM Serif Display', Georgia, serif", letterSpacing: -0.3,
-            }}>{resort.resort_name}</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 20 }}>{FLAG[resort.country] ?? resort.country}</span>
+            <h3 style={{ margin: 0, fontSize: t.fontSize.resortName, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading, letterSpacing: -0.3 }}>
+              {resort.resort_name}
+            </h3>
+            <FavStar isFav={isFav} onToggle={onToggleFav} />
           </div>
           <StarRating score={resort.composite_rating} />
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 26, fontWeight: 800, color: "#38bdf8", fontFamily: "monospace", lineHeight: 1 }}>
-            {total_7day_snow_cm}
-            <span style={{ fontSize: 12, color: "#475569", fontWeight: 400 }}> cm</span>
+          <div style={{ fontSize: t.fontSize.snowTotal, fontWeight: 800, color: t.colors.accentBlue, fontFamily: t.fonts.mono, lineHeight: 1 }}>
+            {total_7day_snow_cm}<span style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, fontWeight: 400 }}> cm</span>
           </div>
-          <div style={{ fontSize: 10, color: "#475569", marginTop: 1 }}>7-day total</div>
+          <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, marginTop: 2 }}>7-day total</div>
           <Delta current={total_7day_snow_cm} previous={prev?.forecast.total_7day_snow_cm} />
         </div>
       </div>
 
-      {/* Snow bars */}
       <div>
-        <div style={{ display: "flex", marginBottom: 5 }}>
-          <div style={{ flex: 3, fontSize: 10, color: "#38bdf8", letterSpacing: 1, textTransform: "uppercase" }}>Next 3 days</div>
-          <div style={{ width: 1 }} />
-          <div style={{ flex: 4, fontSize: 10, color: "#818cf8", letterSpacing: 1, textTransform: "uppercase", paddingLeft: 10 }}>Following 4 days</div>
+        <div style={{ display: "flex", marginBottom: 6 }}>
+          <div style={{ flex: 3, fontSize: t.fontSize.sectionLabel, color: t.colors.accentBlue, letterSpacing: 1, textTransform: "uppercase" }}>Next 3 days</div>
+          <div style={{ flex: 4, fontSize: t.fontSize.sectionLabel, color: t.colors.accentPurple, letterSpacing: 1, textTransform: "uppercase", paddingLeft: 8 }}>Following 4 days</div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-          <div style={{ flex: 3 }}>
-            <SnowBar days={next_3_days} color="linear-gradient(180deg,#38bdf8,#0ea5e9)" />
-          </div>
-          <div style={{ width: 1, height: 44, background: "#1e3a5f", flexShrink: 0 }} />
-          <div style={{ flex: 4 }}>
-            <SnowBar days={following_4_days} color="linear-gradient(180deg,#818cf8,#6366f1)" />
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 3, marginTop: 3 }}>
-          {[...next_3_days, ...following_4_days].map((d, i) => (
-            <div key={i} style={{ flex: 1, fontSize: 9, color: "#334155", textAlign: "center" }}>
-              {new Date(d.date).toLocaleDateString("en-GB", { weekday: "short" }).slice(0,2)}
-            </div>
-          ))}
+          <div style={{ flex: 3 }}><SnowBar days={next_3_days} color={t.bars.colorNext3} /></div>
+          <div style={{ width: 1, height: t.bars.height, background: t.colors.borderSubtle, flexShrink: 0 }} />
+          <div style={{ flex: 4 }}><SnowBar days={following_4_days} color={t.bars.colorNext4} /></div>
         </div>
       </div>
 
-      {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-        {[
-          {
-            label: "LIFTS OPEN",
-            value: <><span style={{ color: "#4ade80" }}>{resort.lifts.open}</span></>,
-            sub: `of ${resort.lifts.total} (${liftsPercent}%)`,
-            bar: liftsPercent,
-            barColor: "#4ade80",
-          },
-          {
-            label: "SNOW DEPTH",
-            value: <><span style={{ color: "#e0f2fe" }}>{next_3_days[0]?.snow_depth_cm ?? "—"}</span><span style={{ fontSize: 10, color: "#64748b" }}> cm</span></>,
-            sub: "at resort level",
-          },
-          {
-            label: "PRIVATE LESSON",
-            value: <><span style={{ color: "#fbbf24" }}>{resort.private_instruction.price_per_hour}</span><span style={{ fontSize: 10, color: "#64748b" }}> {resort.private_instruction.currency}/hr</span></>,
-            sub: "ski school rate",
-          },
-        ].map(({ label, value, sub, bar, barColor }) => (
-          <div key={label} style={{ background: "#0b1222", borderRadius: 10, padding: "10px 12px" }}>
-            <div style={{ fontSize: 9, color: "#475569", letterSpacing: 0.8, marginBottom: 4 }}>{label}</div>
-            <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "monospace" }}>{value}</div>
-            <div style={{ fontSize: 9, color: "#334155", marginTop: 2 }}>{sub}</div>
-            {bar !== undefined && (
-              <div style={{ marginTop: 6, height: 3, borderRadius: 2, background: "#1e293b" }}>
-                <div style={{ height: "100%", width: `${bar}%`, background: barColor, borderRadius: 2, transition: "width 0.5s ease" }} />
-              </div>
-            )}
+        <StatBox
+          label="Lifts Open"
+          value={<span style={{ color: t.colors.accentGreen }}>{resort.lifts.open}</span>}
+          sub={`of ${resort.lifts.total} (${liftsPercent}%)`}
+          barPct={liftsPercent} barColor={t.colors.accentGreen}
+        />
+        <StatBox
+          label="Snow Depth"
+          value={<>{next_3_days[0]?.snow_depth_cm ?? "—"}<span style={{ fontSize: 12, color: t.colors.textMuted }}> cm</span></>}
+          sub="at resort level"
+        />
+        <StatBox
+          label="Ski School"
+          value={<span style={{ color: t.colors.accentYellow }}>{resortMeta?.ski_schools[0]?.price_per_hour ?? resort.private_instruction.price_per_hour}</span>}
+          sub={`${resort.private_instruction.currency}/hr cheapest`}
+        />
+      </div>
+
+      {resortMeta && (
+        <FlightBox
+          airportCode={resortMeta.primary_airport.code}
+          airportName={resortMeta.primary_airport.name}
+          departDate={departDate}
+          returnDate={returnDate}
+        />
+      )}
+    </div>
+  );
+}
+
+function FavouritesStrip({ latest, favourites, onToggleFav }: {
+  latest: ForecastRun; favourites: string[]; onToggleFav: (id: string) => void;
+}) {
+  const favResorts = latest.resorts.filter(r => favourites.includes(r.resort_id));
+  if (favResorts.length === 0) return null;
+  return (
+    <div style={{ background: t.colors.favStripBg, border: `1px solid ${t.colors.favStripBorder}`, borderRadius: t.card.borderRadius, padding: "14px 18px" }}>
+      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.accentGreen, letterSpacing: 1.5, marginBottom: 10, textTransform: "uppercase" }}>
+        ★ Favourites
+      </div>
+      <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+        {favResorts.map(r => (
+          <div key={r.resort_id} style={{
+            minWidth: t.favStrip.cardWidth, background: t.colors.cardBg,
+            border: `1px solid ${t.colors.accentYellow}44`, borderRadius: t.favStrip.cardRadius,
+            padding: t.favStrip.cardPadding, display: "flex", flexDirection: "column", gap: 4,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: t.fontSize.favStrip, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading }}>
+                {FLAG[r.country]} {r.resort_name.split(" ")[0]}
+              </span>
+              <FavStar isFav={true} onToggle={() => onToggleFav(r.resort_id)} />
+            </div>
+            <div style={{ fontSize: t.fontSize.snowTotal - 4, fontWeight: 800, color: t.colors.accentBlue, fontFamily: t.fonts.mono }}>
+              {parseFloat(r.forecast.total_7day_snow_cm).toFixed(1)}<span style={{ fontSize: 10, color: t.colors.textMuted }}> cm</span>
+            </div>
+            <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted }}>{r.lifts.open}/{r.lifts.total} lifts</div>
           </div>
         ))}
       </div>
@@ -160,44 +313,202 @@ function ResortCard({ resort, prev }: { resort: ResortSnapshot; prev?: ResortSna
   );
 }
 
+type Top6Sort = "snow" | "rating" | "lifts";
+
+function Top6Widget({ latest, favourites }: { latest: ForecastRun; favourites: string[] }) {
+  const [sort, setSort] = useState<Top6Sort>("snow");
+  const [favsOnly, setFavsOnly] = useState(false);
+
+  let resorts = favsOnly ? latest.resorts.filter(r => favourites.includes(r.resort_id)) : [...latest.resorts];
+  resorts = resorts.sort((a, b) => {
+    if (sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
+    if (sort === "rating") return b.composite_rating - a.composite_rating;
+    return b.lifts.total - a.lifts.total;
+  }).slice(0, 6);
+
+  const SortBtn = ({ s, label }: { s: Top6Sort; label: string }) => (
+    <button onClick={() => setSort(s)} style={{
+      padding: "4px 10px", borderRadius: 8, border: "none",
+      background: sort === s ? t.colors.tabActiveBg : "transparent",
+      color: sort === s ? t.colors.tabActiveText : t.colors.tabInactiveText,
+      fontSize: t.fontSize.tabLabel, cursor: "pointer", fontFamily: t.fonts.body,
+    }}>{label}</button>
+  );
+
+  return (
+    <div style={{ background: t.colors.top6Bg, border: `1px solid ${t.colors.borderSubtle}`, borderRadius: t.card.borderRadius, padding: t.card.padding }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+        <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase" }}>🏆 Top 6 Resorts</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <SortBtn s="snow" label="❄ Snow" />
+          <SortBtn s="rating" label="★ Rating" />
+          <SortBtn s="lifts" label="⛷ Lifts" />
+          <button onClick={() => setFavsOnly(f => !f)} style={{
+            padding: "4px 10px", borderRadius: 8,
+            border: `1px solid ${favsOnly ? t.colors.accentYellow : t.colors.borderSubtle}`,
+            background: favsOnly ? "#2a1e00" : "transparent",
+            color: favsOnly ? t.colors.accentYellow : t.colors.tabInactiveText,
+            fontSize: t.fontSize.tabLabel, cursor: "pointer", fontFamily: t.fonts.body,
+          }}>★ Favs only</button>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+        {resorts.map((r, i) => (
+          <div key={r.resort_id} style={{
+            minWidth: t.top6.cardWidth, background: t.colors.cardBg,
+            border: `1px solid ${i === 0 ? t.colors.accentBlue + "55" : t.colors.borderSubtle}`,
+            borderRadius: t.top6.cardRadius, padding: t.top6.cardPadding,
+            display: "flex", flexDirection: "column", gap: 6,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontSize: t.top6.rankSize, fontWeight: 700, color: i === 0 ? t.colors.accentYellow : t.colors.textMuted, fontFamily: t.fonts.mono }}>#{i+1}</span>
+              <span style={{ fontSize: 14 }}>{FLAG[r.country]}</span>
+            </div>
+            <div style={{ fontSize: t.fontSize.top6Title, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading, lineHeight: 1.2 }}>
+              {r.resort_name.split(" ")[0]}
+            </div>
+            <div style={{ fontSize: t.fontSize.top6Snow, fontWeight: 800, color: t.colors.accentBlue, fontFamily: t.fonts.mono }}>
+              {parseFloat(r.forecast.total_7day_snow_cm).toFixed(1)}<span style={{ fontSize: 10, color: t.colors.textMuted }}> cm</span>
+            </div>
+            <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted }}>★ {r.composite_rating} · {r.lifts.open}/{r.lifts.total} lifts</div>
+          </div>
+        ))}
+        {resorts.length === 0 && (
+          <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, padding: "10px 0" }}>No favourites yet</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type TableSort = "snow" | "rating" | "lifts" | "depth";
+type TableDir = "asc" | "desc";
+
+function TableView({ latest, prev, favourites, onToggleFav }: {
+  latest: ForecastRun; prev?: ForecastRun; favourites: string[]; onToggleFav: (id: string) => void;
+}) {
+  const [sort, setSort] = useState<TableSort>("snow");
+  const [dir, setDir] = useState<TableDir>("desc");
+
+  const toggleSort = (col: TableSort) => {
+    if (sort === col) setDir(d => d === "desc" ? "asc" : "desc");
+    else { setSort(col); setDir("desc"); }
+  };
+
+  const sorted = [...latest.resorts].sort((a, b) => {
+    let av = 0, bv = 0;
+    if (sort === "snow") { av = parseFloat(a.forecast.total_7day_snow_cm); bv = parseFloat(b.forecast.total_7day_snow_cm); }
+    if (sort === "rating") { av = a.composite_rating; bv = b.composite_rating; }
+    if (sort === "lifts") { av = a.lifts.open; bv = b.lifts.open; }
+    if (sort === "depth") { av = a.forecast.next_3_days[0]?.snow_depth_cm ?? 0; bv = b.forecast.next_3_days[0]?.snow_depth_cm ?? 0; }
+    return dir === "desc" ? bv - av : av - bv;
+  });
+
+  const Th = ({ col, label }: { col: TableSort; label: string }) => (
+    <th onClick={() => toggleSort(col)} style={{
+      padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`,
+      fontSize: t.fontSize.tableHeader, color: sort === col ? t.colors.accentBlue : t.colors.textMuted,
+      letterSpacing: 0.8, textAlign: "left", textTransform: "uppercase",
+      cursor: "pointer", userSelect: "none", whiteSpace: "nowrap",
+      background: t.colors.tableHeaderBg,
+    }}>
+      {label} {sort === col ? (dir === "desc" ? "↓" : "↑") : ""}
+    </th>
+  );
+
+  return (
+    <div style={{ overflowX: "auto", borderRadius: t.table.borderRadius, border: `1px solid ${t.colors.borderSubtle}` }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: t.fonts.body }}>
+        <thead>
+          <tr>
+            <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Resort</th>
+            <Th col="snow" label="7-day Snow" />
+            <Th col="depth" label="Depth" />
+            <Th col="rating" label="Rating" />
+            <Th col="lifts" label="Lifts" />
+            <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Ski School</th>
+            <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Airport</th>
+            <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>★</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((r, i) => {
+            const isFav = favourites.includes(r.resort_id);
+            const depth = r.forecast.next_3_days[0]?.snow_depth_cm ?? "—";
+            const liftsPercent = Math.round((r.lifts.open / r.lifts.total) * 100);
+            const resortMeta = RESORTS.find(x => x.id === r.resort_id);
+            const prevResort = prev?.resorts.find(x => x.resort_id === r.resort_id);
+            const snowDiff = prevResort ? parseFloat(r.forecast.total_7day_snow_cm) - parseFloat(prevResort.forecast.total_7day_snow_cm) : null;
+            return (
+              <tr key={r.resort_id} style={{ background: i % 2 === 0 ? t.colors.tableBg : t.colors.historyRowBg, borderTop: `1px solid ${t.colors.borderSubtle}` }}>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: t.fontSize.tableCell, fontWeight: 600, color: t.colors.textPrimary, fontFamily: t.fonts.heading }}>{FLAG[r.country]} {r.resort_name}</span>
+                </td>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: t.fontSize.tableCell, fontWeight: 700, color: t.colors.accentBlue, fontFamily: t.fonts.mono }}>{r.forecast.total_7day_snow_cm} cm</span>
+                  {snowDiff !== null && Math.abs(snowDiff) >= 0.1 && (
+                    <span style={{ fontSize: 10, marginLeft: 4, color: snowDiff > 0 ? t.colors.accentGreen : t.colors.accentRed }}>{snowDiff > 0 ? "▲" : "▼"}</span>
+                  )}
+                </td>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px` }}>
+                  <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.textSecondary, fontFamily: t.fonts.mono }}>{depth} cm</span>
+                </td>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px` }}>
+                  <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.accentYellow, fontFamily: t.fonts.mono }}>★ {r.composite_rating}</span>
+                </td>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.accentGreen, fontFamily: t.fonts.mono }}>{r.lifts.open}/{r.lifts.total}</span>
+                  <span style={{ fontSize: 10, color: t.colors.textMuted, marginLeft: 4 }}>({liftsPercent}%)</span>
+                </td>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
+                  {resortMeta ? <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.accentYellow, fontFamily: t.fonts.mono }}>{resortMeta.ski_schools[0].price_per_hour} {resortMeta.ski_schools[0].currency}/hr</span> : "—"}
+                </td>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
+                  {resortMeta ? <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.textSecondary }}>{resortMeta.primary_airport.code} · {resortMeta.primary_airport.distance_km}km</span> : "—"}
+                </td>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px` }}>
+                  <FavStar isFav={isFav} onToggle={() => onToggleFav(r.resort_id)} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function HistoryPanel({ history }: { history: ForecastRun[] }) {
   if (history.length < 2) return null;
   return (
-    <div style={{ background: "#0b1222", border: "1px solid #1e293b", borderRadius: 16, padding: "20px 22px" }}>
-      <h3 style={{ fontSize: 11, color: "#475569", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>
-        Forecast History · {history.length} / {MAX_HISTORY} runs stored
+    <div style={{ background: t.colors.historyBg, border: `1px solid ${t.colors.borderSubtle}`, borderRadius: t.card.borderRadius, padding: t.card.padding }}>
+      <h3 style={{ margin: "0 0 14px", fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase" }}>
+        Forecast History · {history.length} / {MAX_HISTORY} runs
       </h3>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {history.map((run, i) => (
           <div key={run.fetched_at} style={{
-            display: "flex", alignItems: "center", gap: 12,
-            padding: "10px 14px", borderRadius: 10,
-            background: i === 0 ? "#0c1e35" : "#0f172a",
-            border: `1px solid ${i === 0 ? "#1e3a5f" : "transparent"}`,
+            display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10,
+            background: i === 0 ? t.colors.historyActiveBg : t.colors.historyRowBg,
+            border: `1px solid ${i === 0 ? t.colors.borderActive : "transparent"}`,
           }}>
-            <div style={{ fontSize: 11, color: i === 0 ? "#38bdf8" : "#334155", fontFamily: "monospace", minWidth: 160 }}>
-              {i === 0 ? "▶ " : "  "}
-              {new Date(run.fetched_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+            <div style={{ fontSize: t.fontSize.historyTime, color: i === 0 ? t.colors.accentBlue : t.colors.textMuted, fontFamily: t.fonts.mono, minWidth: 150 }}>
+              {i === 0 ? "▶ " : "  "}{new Date(run.fetched_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
             </div>
             <div style={{ display: "flex", gap: 20, flex: 1, flexWrap: "wrap" }}>
               {run.resorts.map(r => {
                 const prevRun = history[i + 1];
                 const prevResort = prevRun?.resorts.find(x => x.resort_id === r.resort_id);
-                const diff = prevResort
-                  ? parseFloat(r.forecast.total_7day_snow_cm) - parseFloat(prevResort.forecast.total_7day_snow_cm)
-                  : null;
+                const diff = prevResort ? parseFloat(r.forecast.total_7day_snow_cm) - parseFloat(prevResort.forecast.total_7day_snow_cm) : null;
                 return (
                   <div key={r.resort_id} style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#cbd5e1", fontFamily: "monospace" }}>
-                      {r.forecast.total_7day_snow_cm}
-                      <span style={{ fontSize: 9, color: "#475569" }}>cm</span>
+                    <div style={{ fontSize: t.fontSize.historyTime, fontWeight: 700, color: t.colors.textSecondary, fontFamily: t.fonts.mono }}>
+                      {r.forecast.total_7day_snow_cm}<span style={{ fontSize: 9, color: t.colors.textMuted }}>cm</span>
                       {diff !== null && Math.abs(diff) >= 0.1 && (
-                        <span style={{ fontSize: 10, marginLeft: 3, color: diff > 0 ? "#4ade80" : "#f87171" }}>
-                          {diff > 0 ? "▲" : "▼"}
-                        </span>
+                        <span style={{ fontSize: 10, marginLeft: 3, color: diff > 0 ? t.colors.accentGreen : t.colors.accentRed }}>{diff > 0 ? "▲" : "▼"}</span>
                       )}
                     </div>
-                    <div style={{ fontSize: 9, color: "#334155" }}>{r.resort_name.split(" ")[0]}</div>
+                    <div style={{ fontSize: 9, color: t.colors.textFaint }}>{r.resort_name.split(" ")[0]}</div>
                   </div>
                 );
               })}
@@ -209,133 +520,136 @@ function HistoryPanel({ history }: { history: ForecastRun[] }) {
   );
 }
 
-// ─── Main Dashboard ────────────────────────────────────────────────────────────
+type ViewMode = "cards" | "table";
 
 export default function Dashboard({ initialHistory }: { initialHistory: ForecastRun[] }) {
   const [history, setHistory] = useState<ForecastRun[]>(initialHistory);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [view, setView] = useState<ViewMode>("cards");
+  const [favourites, setFavourites] = useState<string[]>([]);
+  const [departDate, setDepartDate] = useState(nextFriday());
+  const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
+
+  useEffect(() => {
+    fetch("/api/favourites").then(r => r.json()).then(d => { if (d.ok) setFavourites(d.favourites); }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const d = new Date(departDate);
+    d.setDate(d.getDate() + 2);
+    setReturnDate(d.toISOString().split("T")[0]);
+  }, [departDate]);
+
+  const toggleFav = useCallback(async (id: string) => {
+    const action = favourites.includes(id) ? "remove" : "add";
+    setFavourites(prev => action === "add" ? [...prev, id] : prev.filter(f => f !== id));
+    try {
+      await fetch("/api/favourites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action }) });
+    } catch {}
+  }, [favourites]);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null); setNotice(null);
     try {
       const res = await fetch("/api/fetch-forecasts");
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       setHistory(json.history);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+      if (!json.stored) setNotice("Forecasts checked — no changes since last run, history unchanged.");
+    } catch (e: any) { setError(e.message); }
+    finally { setLoading(false); }
   }, []);
 
   const latest = history[0];
   const previous = history[1];
 
+  const TabBtn = ({ v, label }: { v: ViewMode; label: string }) => (
+    <button onClick={() => setView(v)} style={{
+      padding: "7px 16px", borderRadius: 8, border: "none",
+      background: view === v ? t.colors.tabActiveBg : "transparent",
+      color: view === v ? t.colors.tabActiveText : t.colors.tabInactiveText,
+      fontSize: t.fontSize.tabLabel, fontWeight: view === v ? 600 : 400,
+      cursor: "pointer", fontFamily: t.fonts.body, transition: "all 0.15s",
+    }}>{label}</button>
+  );
+
   return (
-    <div style={{ minHeight: "100vh", paddingBottom: 60 }}>
-      {/* Header */}
-      <div style={{
-        background: "linear-gradient(180deg,#0a1628,#020817)",
-        borderBottom: "1px solid #1e293b",
-        padding: "24px 32px",
-        position: "sticky", top: 0, zIndex: 10,
-        backdropFilter: "blur(12px)",
-      }}>
-        <div style={{ maxWidth: 1140, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{ fontSize: 30 }}>⛷️</span>
-            <div>
-              <h1 style={{
-                fontSize: 22, fontWeight: 700, color: "#f0f9ff",
-                fontFamily: "'DM Serif Display', Georgia, serif", letterSpacing: -0.4,
-              }}>Ski Forecast Desk</h1>
-              <div style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>
-                {latest
-                  ? <>Last run: <strong style={{ color: "#64748b" }}>{new Date(latest.fetched_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</strong> · {MAX_HISTORY - history.length} history slots remaining</>
-                  : "No data yet — hit Refresh to load forecasts"}
+    <div style={{ minHeight: "100vh", background: t.colors.pageBg, paddingBottom: 60 }}>
+      <div style={{ background: t.colors.headerBg, borderBottom: `1px solid ${t.colors.borderSubtle}`, padding: "20px 32px", position: "sticky", top: 0, zIndex: 10 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ fontSize: 28 }}>⛷️</span>
+              <div>
+                <h1 style={{ margin: 0, fontSize: t.fontSize.appTitle, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading }}>Ski Forecast Desk</h1>
+                <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, marginTop: 2 }}>
+                  {latest
+                    ? <>Last run: <strong style={{ color: t.colors.textSecondary }}>{new Date(latest.fetched_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</strong> · {MAX_HISTORY - history.length} slots remaining</>
+                    : "No data yet — hit Refresh to load forecasts"}
+                </div>
               </div>
             </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 10 }}>
-            <a
-              href="/api/export-csv"
-              style={{
-                padding: "9px 18px", borderRadius: 10, border: "1px solid #1e3a5f",
-                background: "transparent", color: latest ? "#94a3b8" : "#334155",
-                fontSize: 13, textDecoration: "none", display: "flex", alignItems: "center", gap: 6,
-                pointerEvents: latest ? "auto" : "none",
-                transition: "all 0.2s",
-              }}
-            >
-              ↓ Export CSV
-            </a>
-            <button
-              onClick={refresh}
-              disabled={loading}
-              style={{
-                padding: "9px 22px", borderRadius: 10, border: "none",
-                background: loading ? "#1e3a5f" : "linear-gradient(135deg,#0ea5e9,#3b82f6)",
-                color: loading ? "#475569" : "#fff",
-                fontSize: 13, fontWeight: 600, cursor: loading ? "wait" : "pointer",
-                fontFamily: "'DM Sans', sans-serif", letterSpacing: 0.2,
-              }}
-            >
-              {loading ? <span style={{ animation: "pulse 1.2s infinite" }}>⟳ Fetching…</span> : "⟳ Refresh"}
-            </button>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>
+                <span>✈ Depart</span>
+                <input type="date" value={departDate} onChange={e => setDepartDate(e.target.value)} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }} />
+                <span>Return</span>
+                <input type="date" value={returnDate} min={departDate} onChange={e => setReturnDate(e.target.value)} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }} />
+              </div>
+              <a href="/api/export-csv" style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`, background: "transparent", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, textDecoration: "none", fontFamily: t.fonts.body, opacity: latest ? 1 : 0.4 }}>↓ CSV</a>
+              <button onClick={refresh} disabled={loading} style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: loading ? t.colors.refreshBtnDisabled : t.colors.refreshBtn, color: loading ? t.colors.textMuted : "#fff", fontSize: t.fontSize.subtext, fontWeight: 600, cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body }}>
+                {loading ? "⟳ Fetching…" : "⟳ Refresh"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 1140, margin: "0 auto", padding: "32px 24px", display: "flex", flexDirection: "column", gap: 24 }}>
-
-        {error && (
-          <div style={{ background: "#450a0a", border: "1px solid #7f1d1d", borderRadius: 12, padding: "13px 18px", color: "#fca5a5", fontSize: 13 }}>
-            ⚠️ {error}
-          </div>
-        )}
-
-        {history.length >= MAX_HISTORY && (
-          <div style={{ background: "#1c1400", border: "1px solid #3f2d00", borderRadius: 12, padding: "11px 18px", color: "#fbbf24", fontSize: 12 }}>
-            📋 History full ({MAX_HISTORY}/{MAX_HISTORY}) — next refresh will drop the oldest run.
-          </div>
-        )}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 22 }}>
+        {notice && <div style={{ background: "#0c1a0c", border: "1px solid #1a3a1a", borderRadius: 12, padding: "13px 18px", color: t.colors.accentGreen, fontSize: t.fontSize.subtext }}>✓ {notice}</div>}
+        {error && <div style={{ background: "#450a0a", border: "1px solid #7f1d1d", borderRadius: 12, padding: "13px 18px", color: t.colors.accentRed, fontSize: t.fontSize.subtext }}>⚠️ {error}</div>}
+        {history.length >= MAX_HISTORY && <div style={{ background: "#1c1400", border: "1px solid #3f2d00", borderRadius: 12, padding: "11px 18px", color: t.colors.accentYellow, fontSize: t.fontSize.subtext }}>📋 History full — next refresh will drop the oldest run.</div>}
 
         {latest ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px,1fr))", gap: 16 }}>
-            {latest.resorts.map((resort, i) => (
-              <div key={resort.resort_id} style={{ animation: `fadeUp 0.4s ease ${i * 0.07}s both` }}>
-                <ResortCard
-                  resort={resort}
-                  prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
-                />
+          <>
+            <FavouritesStrip latest={latest} favourites={favourites} onToggleFav={toggleFav} />
+            <Top6Widget latest={latest} favourites={favourites} />
+            <div style={{ display: "flex", gap: 6, background: t.colors.statBg, padding: 4, borderRadius: 10, alignSelf: "flex-start", border: `1px solid ${t.colors.borderSubtle}` }}>
+              <TabBtn v="cards" label="⊞ Cards" />
+              <TabBtn v="table" label="≡ Table" />
+            </div>
+            {view === "cards" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18 }}>
+                {latest.resorts.map(resort => (
+                  <ResortCard
+                    key={resort.resort_id} resort={resort}
+                    prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
+                    isFav={favourites.includes(resort.resort_id)}
+                    onToggleFav={() => toggleFav(resort.resort_id)}
+                    departDate={departDate} returnDate={returnDate}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            ) : (
+              <TableView latest={latest} prev={previous} favourites={favourites} onToggleFav={toggleFav} />
+            )}
+            <HistoryPanel history={history} />
+            <div style={{ display: "flex", gap: 20, fontSize: t.fontSize.subtext, color: t.colors.textMuted, paddingTop: 10, borderTop: `1px solid ${t.colors.borderSubtle}`, flexWrap: "wrap" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: t.colors.accentBlue }} />Next 3 days</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: t.colors.accentPurple }} />Following 4 days</span>
+              <span style={{ color: t.colors.priceLow }}>● Low price</span>
+              <span style={{ color: t.colors.priceTypical }}>● Typical</span>
+              <span style={{ color: t.colors.priceHigh }}>● High price</span>
+              <span style={{ marginLeft: "auto" }}>▲▼ = change vs prev run · Open-Meteo + SerpApi</span>
+            </div>
+          </>
         ) : !loading && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "80px 20px", gap: 14, color: "#475569" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "80px 20px", gap: 14 }}>
             <span style={{ fontSize: 52 }}>🏔️</span>
-            <div style={{ fontSize: 17, color: "#64748b" }}>No forecast data yet</div>
-            <div style={{ fontSize: 13 }}>Hit Refresh to pull live snow forecasts</div>
-          </div>
-        )}
-
-        <HistoryPanel history={history} />
-
-        {latest && (
-          <div style={{ display: "flex", gap: 20, fontSize: 11, color: "#334155", paddingTop: 10, borderTop: "1px solid #1e293b" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: "#0ea5e9" }} />
-              Next 3 days snowfall
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: "#818cf8" }} />
-              Following 4 days snowfall
-            </span>
-            <span style={{ marginLeft: "auto" }}>▲ ▼ = change vs previous run · snow data: Open-Meteo</span>
+            <div style={{ fontSize: 18, color: t.colors.textSecondary }}>No forecast data yet</div>
+            <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>Hit Refresh to pull live snow forecasts</div>
           </div>
         )}
       </div>
