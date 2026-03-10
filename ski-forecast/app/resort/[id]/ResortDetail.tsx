@@ -412,9 +412,6 @@ export default function ResortDetail({ resort, snapshot }: {
               { label: "LIFTS OPEN", value: `${snapshot.lifts.open} / ${snapshot.lifts.total}`, sub: `${liftsPercent}%`, color: t.colors.accentGreen },
               { label: "SNOW DEPTH", value: `${allDays[0]?.snow_depth_cm ?? "—"} cm`, color: t.colors.textPrimary },
               { label: "TOTAL LIFTS", value: resort.total_lifts.toString(), color: t.colors.textPrimary },
-              { label: "1-DAY PASS", value: resort.ski_pass ? `${resort.ski_pass.day_1} ${resort.ski_pass.currency}` : "—", color: t.colors.accentGreen },
-              { label: "3-DAY PASS", value: resort.ski_pass ? `${resort.ski_pass.day_3} ${resort.ski_pass.currency}` : "—", color: t.colors.accentGreen },
-              { label: "6-DAY PASS", value: resort.ski_pass ? `${resort.ski_pass.day_6} ${resort.ski_pass.currency}` : "—", color: t.colors.accentGreen },
               { label: "CHEAPEST SCHOOL", value: `${cheapestSchool.price_per_hour} ${cheapestSchool.currency}`, sub: "per hour", color: t.colors.accentYellow },
             ].map(s => (
               <div key={s.label} style={{ background: t.colors.statBg, borderRadius: t.card.statRadius, padding: 14 }}>
@@ -466,6 +463,40 @@ export default function ResortDetail({ resort, snapshot }: {
             ))}
           </div>
         </div>
+
+        {/* Ski Pass Prices */}
+        {resort.ski_pass && (
+          <div>
+            <h2 style={{ margin: "0 0 14px", fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase" }}>
+              🎫 Ski Pass Prices
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+              {[
+                { label: "1 Day",   value: resort.ski_pass.day_1 },
+                { label: "3 Days",  value: resort.ski_pass.day_3 },
+                { label: "6 Days",  value: resort.ski_pass.day_6 },
+                { label: "Season",  value: resort.ski_pass.season ?? null },
+              ].map(({ label, value }) => value ? (
+                <div key={label} style={{
+                  background: t.colors.statBg,
+                  border: `1px solid ${t.colors.borderSubtle}`,
+                  borderRadius: t.card.statRadius,
+                  padding: "14px 16px",
+                  textAlign: "center",
+                }}>
+                  <div style={{ fontSize: 11, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: t.colors.accentGreen, fontFamily: t.fonts.mono }}>
+                    {value}
+                  </div>
+                  <div style={{ fontSize: 11, color: t.colors.textMuted, marginTop: 3 }}>{resort.ski_pass.currency}</div>
+                </div>
+              ) : null)}
+            </div>
+            <div style={{ fontSize: 11, color: t.colors.textFaint, marginTop: 8 }}>
+              Prices are indicative — check resort website for current rates
+            </div>
+          </div>
+        )}
 
         {/* Flights section */}
         <div>
