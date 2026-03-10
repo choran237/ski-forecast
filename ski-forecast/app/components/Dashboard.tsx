@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ForecastRun, ResortSnapshot } from "@/lib/resorts";
+import { ForecastRun, ResortSnapshot, getBestDeparture, LONDON_AIRPORT_PRIORITY, LondonAirport } from "@/lib/resorts";
 import { RESORTS } from "@/lib/resorts";
 import { theme as t } from "@/lib/theme";
 import { Currency, CURRENCY_OPTIONS, formatPrice } from "@/lib/currency";
@@ -118,9 +118,9 @@ function StatBox({ label, value, sub, barPct, barColor }: {
   );
 }
 
-function FlightBox({ airportCode, airportName, departDate, returnDate, onData, defaultFlightMins }: {
+function FlightBox({ airportCode, airportName, departDate, returnDate, onData, defaultFlightMins, departureAirport }: {
   airportCode: string; airportName: string; departDate: string; returnDate: string;
-  onData?: (d: any) => void; defaultFlightMins?: number;
+  onData?: (d: any) => void; defaultFlightMins?: number; departureAirport: string;
 }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -142,7 +142,7 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/flights?airport=${airportCode}&depart=${departDate}&return=${returnDate}`);
+      const res = await fetch(`/api/flights?airport=${airportCode}&depart=${departDate}&return=${returnDate}&from=${departureAirport}`);
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || "No flights found");
       setData(json);
@@ -154,12 +154,12 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
     }
   }, [airportCode, departDate, returnDate, cacheKey]);
 
-  const skyscannerUrl = `https://www.skyscanner.net/transport/flights/lhr/${airportCode.toLowerCase()}/${departDate.replace(/-/g,"").slice(2)}/${returnDate.replace(/-/g,"").slice(2)}/?adults=1&currency=GBP`;
+  const skyscannerUrl = `https://www.skyscanner.net/transport/flights/${departureAirport.toLowerCase()}/${airportCode.toLowerCase()}/${departDate.replace(/-/g,"").slice(2)}/${returnDate.replace(/-/g,"").slice(2)}/?adults=1&currency=GBP`;
 
   return (
     <div style={{ background: t.colors.flightBg, border: `1px solid ${t.colors.flightBorder}`, borderRadius: t.card.statRadius, padding: t.card.statPadding }}>
       <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span>✈ FLIGHTS · LHR → {airportCode}</span>
+        <span>✈ FLIGHTS · {departureAirport} → {airportCode}</span>
         <span style={{ color: t.colors.textFaint, fontFamily: t.fonts.mono }}>
           {formatDuration(data?.duration_mins ?? defaultFlightMins ?? null)}
         </span>
@@ -208,10 +208,10 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
   );
 }
 
-function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, displayCurrency }: {
+function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, displayCurrency, preferredDeparture }: {
   resort: ResortSnapshot; prev?: ResortSnapshot;
   isFav: boolean; onToggleFav: () => void;
-  departDate: string; returnDate: string; displayCurrency: string;
+  departDate: string; returnDate: string; displayCurrency: string; preferredDeparture: LondonAirport;
 }) {
   const { next_3_days, following_4_days, total_7day_snow_cm } = resort.forecast;
   const liftsPercent = Math.round((resort.lifts.open / resort.lifts.total) * 100);
@@ -297,15 +297,18 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
         const current7day = parseFloat(resort.forecast.total_7day_snow_cm);
         const pctOfAvg = avg > 0 ? Math.round((current7day / avg) * 100) : 0;
         const depthNow = next_3_days[0]?.snow_depth_cm ?? 0;
+        const bestDep = getBestDeparture(resortMeta.primary_airport, preferredDeparture);
+        const activeDeparture = bestDep?.code ?? "LHR";
         const transitHrs = resortMeta.primary_airport.transit_hours;
-        const flightMins = flightData?.duration_mins ?? resortMeta.primary_airport.flight_mins;
+        const flightMins = flightData?.duration_mins ?? bestDep?.mins ?? 120;
         const totalHrs = ((flightMins / 60) + transitHrs).toFixed(1);
+        const noDirectRoute = bestDep === null;
         return (
           <>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
                 <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>BASE</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.mono }}>{base}<span style={{ fontSize: 10, color: t.colors.textMuted }}>cm</span></div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.mono }}>{depthNow}<span style={{ fontSize: 10, color: t.colors.textMuted }}>cm</span></div>
                 <div style={{ fontSize: 9, color: t.colors.textFaint }}>live · {base}cm typical</div>
               </div>
               <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
@@ -324,7 +327,7 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
                   {totalHrs}<span style={{ fontSize: 10, color: t.colors.textMuted }}>h</span>
                 </div>
                 <div style={{ fontSize: 9, color: t.colors.textFaint }}>
-                  {Math.floor(flightMins/60)}h{flightMins%60}m ✈ + {transitHrs}h 🚗
+                  {noDirectRoute ? "no direct route" : `${Math.floor(flightMins/60)}h${flightMins%60}m ✈ + ${transitHrs}h 🚗`}
                 </div>
               </div>
             </div>
@@ -334,7 +337,8 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
               departDate={departDate}
               returnDate={returnDate}
               onData={setFlightData}
-              defaultFlightMins={resortMeta.primary_airport.flight_mins}
+              defaultFlightMins={bestDep?.mins}
+              departureAirport={activeDeparture}
             />
           </>
         );
@@ -620,10 +624,9 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [minKmRuns, setMinKmRuns] = useState(0);
   const [maxTransitHours, setMaxTransitHours] = useState(0);
   const [maxFlightHours, setMaxFlightHours] = useState(0);
+  const [preferredDeparture, setPreferredDeparture] = useState<LondonAirport>("LTN");
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
-  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
-  const [calendarMonth, setCalendarMonth] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() });
 
   // On mount, always fetch fresh history so deltas are correct on first load
   useEffect(() => {
@@ -677,7 +680,7 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: t.colors.pageBg, paddingBottom: 60 }} onClick={() => setCalendarTarget(null)}>
+    <div style={{ minHeight: "100vh", background: t.colors.pageBg, paddingBottom: 60 }}>
       <div style={{ background: t.colors.headerBg, borderBottom: `1px solid ${t.colors.borderSubtle}`, padding: "20px 32px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
@@ -693,41 +696,23 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
               </div>
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted, position: "relative" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>
                 <span>✈ Depart</span>
-                <button onClick={e => { e.stopPropagation(); const d = new Date(departDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(t => t === "depart" ? null : "depart"); }} style={{ background: t.colors.cardBg, border: `1px solid ${calendarTarget === "depart" ? "#4a9edd" : t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>{departDate}</button>
+                <input type="date" value={departDate} onChange={e => setDepartDate(e.target.value)} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }} />
                 <span>Return</span>
-                <button onClick={e => { e.stopPropagation(); const d = new Date(returnDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(t => t === "return" ? null : "return"); }} style={{ background: t.colors.cardBg, border: `1px solid ${calendarTarget === "return" ? "#4a9edd" : t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>{returnDate}</button>
-                {calendarTarget && (() => {
-                  const { year, month } = calendarMonth;
-                  const firstDay = new Date(year, month, 1).getDay();
-                  const daysInMonth = new Date(year, month + 1, 0).getDate();
-                  const cells: (number|null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
-                  while (cells.length % 7 !== 0) cells.push(null);
-                  const today = new Date().toISOString().split("T")[0];
-                  return (
-                    <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "110%", left: 0, zIndex: 100, background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 12, padding: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 260 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>‹</button>
-                        <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{new Date(year, month).toLocaleString("default", { month: "long", year: "numeric" })}</span>
-                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>›</button>
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, textAlign: "center" }}>
-                        {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => <div key={d} style={{ fontSize: 10, color: "#7ba7cc", paddingBottom: 4 }}>{d}</div>)}
-                        {cells.map((day, i) => {
-                          if (!day) return <div key={i} />;
-                          const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                          const isSelected = iso === (calendarTarget === "depart" ? departDate : returnDate);
-                          const inRange = iso > departDate && iso < returnDate;
-                          const isPast = iso < today;
-                          return <div key={i} onClick={() => { if (isPast) return; if (calendarTarget === "depart") { setDepartDate(iso); if (iso >= returnDate) setReturnDate(sundayAfter(iso)); } else { if (iso > departDate) setReturnDate(iso); } setCalendarTarget(null); }} style={{ padding: "4px 2px", borderRadius: 4, fontSize: 12, cursor: isPast ? "default" : "pointer", background: isSelected ? "#1d6fa4" : inRange ? "#0d3a5c" : "transparent", color: isPast ? "#3a5070" : isSelected ? "#fff" : "#c8dff0", fontWeight: isSelected ? 700 : 400 }}>{day}</div>;
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
+                <input type="date" value={returnDate} min={departDate} onChange={e => setReturnDate(e.target.value)} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }} />
               </div>
               <select
+                value={preferredDeparture}
+                onChange={e => setPreferredDeparture(e.target.value as LondonAirport)}
+                style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}
+              >
+                <option value="LTN">✈ LTN</option>
+                <option value="LHR">✈ LHR</option>
+                <option value="LGW">✈ LGW</option>
+                <option value="STN">✈ STN</option>
+              </select>
+                            <select
                 value={displayCurrency}
                 onChange={e => setDisplayCurrency(e.target.value as Currency)}
                 style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}
@@ -875,6 +860,7 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                           isFav={favourites.includes(resort.resort_id)}
                           onToggleFav={() => toggleFav(resort.resort_id)}
                           departDate={departDate} returnDate={returnDate} displayCurrency={displayCurrency}
+                          preferredDeparture={preferredDeparture}
                         />
                       ))}
                     </div>
