@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Resort, ResortSnapshot, DayForecast } from "@/lib/resorts";
 import { theme as t } from "@/lib/theme";
+import { Currency, CURRENCY_OPTIONS, formatPrice } from "@/lib/currency";
 
 const FLAG: Record<string, string> = {
   CH: "🇨🇭", FR: "🇫🇷", AT: "🇦🇹", IT: "🇮🇹", NO: "🇳🇴", SE: "🇸🇪",
@@ -246,6 +247,8 @@ export default function ResortDetail({ resort, snapshot }: {
       .finally(() => setSummaryLoading(false));
   }, [resort.id]);
 
+  const [displayCurrency, setDisplayCurrency] = useState<Currency>("local");
+
   const allAirports = [resort.primary_airport, ...resort.alt_airports];
 
   // Build a flat list of {londonCode, destAirport} pairs where a direct flight exists,
@@ -334,7 +337,22 @@ export default function ResortDetail({ resort, snapshot }: {
               {resort.name}
             </h1>
           </div>
-          <StarRating score={resort.composite_rating} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <StarRating score={resort.composite_rating} />
+            <select
+              value={displayCurrency}
+              onChange={e => setDisplayCurrency(e.target.value as Currency)}
+              style={{
+                background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`,
+                borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary,
+                fontSize: t.fontSize.subtext, cursor: "pointer", fontFamily: t.fonts.body,
+              }}
+            >
+              {CURRENCY_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -412,7 +430,7 @@ export default function ResortDetail({ resort, snapshot }: {
               { label: "LIFTS OPEN", value: `${snapshot.lifts.open} / ${snapshot.lifts.total}`, sub: `${liftsPercent}%`, color: t.colors.accentGreen },
               { label: "SNOW DEPTH", value: `${allDays[0]?.snow_depth_cm ?? "—"} cm`, color: t.colors.textPrimary },
               { label: "TOTAL LIFTS", value: resort.total_lifts.toString(), color: t.colors.textPrimary },
-              { label: "CHEAPEST SCHOOL", value: `${cheapestSchool.price_per_hour} ${cheapestSchool.currency}`, sub: "per hour", color: t.colors.accentYellow },
+              { label: "CHEAPEST SCHOOL", value: formatPrice(cheapestSchool.price_per_hour, cheapestSchool.currency, displayCurrency), sub: "per hour", color: t.colors.accentYellow },
             ].map(s => (
               <div key={s.label} style={{ background: t.colors.statBg, borderRadius: t.card.statRadius, padding: 14 }}>
                 <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 4 }}>{s.label}</div>
@@ -457,7 +475,7 @@ export default function ResortDetail({ resort, snapshot }: {
                   </div>
                 </div>
                 <div style={{ fontSize: t.fontSize.detailValue, fontWeight: 800, color: t.colors.accentYellow, fontFamily: t.fonts.mono }}>
-                  {school.price_per_hour} <span style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, fontWeight: 400 }}>{school.currency}/hr</span>
+                  {formatPrice(school.price_per_hour, school.currency, displayCurrency)} <span style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, fontWeight: 400 }}>{displayCurrency === "local" ? school.currency : displayCurrency}/hr</span>
                 </div>
               </div>
             ))}
@@ -486,9 +504,11 @@ export default function ResortDetail({ resort, snapshot }: {
                 }}>
                   <div style={{ fontSize: 11, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: t.colors.accentGreen, fontFamily: t.fonts.mono }}>
-                    {value}
+                    {formatPrice(value, resort.ski_pass.currency, displayCurrency)}
                   </div>
-                  <div style={{ fontSize: 11, color: t.colors.textMuted, marginTop: 3 }}>{resort.ski_pass.currency}</div>
+                  {displayCurrency === "local" && (
+                    <div style={{ fontSize: 11, color: t.colors.textMuted, marginTop: 3 }}>{resort.ski_pass.currency}</div>
+                  )}
                 </div>
               ) : null)}
             </div>
