@@ -1111,7 +1111,6 @@ export const RESORTS: Resort[] = [
     snow_data: {base_depth_cm: 85, summit_depth_cm: 340, avg_seasonal_cm: 580} },
 
 ];
-];
 
 // ─── Shared data types ─────────────────────────────────────────────────────────
 
