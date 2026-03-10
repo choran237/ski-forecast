@@ -2,7 +2,7 @@
 // app/resort/[id]/ResortDetail.tsx
 
 import { useState, useCallback, useEffect } from "react";
-import { Resort, ResortSnapshot, DayForecast, SkiPassPrices } from "@/lib/resorts";
+import { Resort, ResortSnapshot, DayForecast, SkiPassPrices, SnowData } from "@/lib/resorts";
 import { Currency, CURRENCY_OPTIONS, formatPrice } from "@/lib/currency";
 import { theme as t } from "@/lib/theme";
 
@@ -300,8 +300,9 @@ export default function ResortDetail({ resort, snapshot }: {
             {[
               { label: "7-DAY SNOW", value: `${snapshot.forecast.total_7day_snow_cm} cm`, color: t.colors.accentBlue },
               { label: "LIFTS OPEN", value: `${snapshot.lifts.open} / ${snapshot.lifts.total}`, sub: `${liftsPercent}%`, color: t.colors.accentGreen },
-              { label: "SNOW DEPTH", value: `${allDays[0]?.snow_depth_cm ?? "—"} cm`, color: t.colors.textPrimary },
               { label: "TOTAL LIFTS", value: resort.total_lifts.toString(), color: t.colors.textPrimary },
+              { label: "TOTAL RUNS", value: resort.total_runs.toString(), color: t.colors.textPrimary },
+              { label: "KM OF RUNS", value: `${resort.km_of_runs} km`, color: t.colors.accentPurple },
               { label: "CHEAPEST SCHOOL", value: `${cheapestSchool.price_per_hour} ${cheapestSchool.currency}`, sub: "per hour", color: t.colors.accentYellow },
             ].map(s => (
               <div key={s.label} style={{ background: t.colors.statBg, borderRadius: t.card.statRadius, padding: 14 }}>
@@ -312,6 +313,35 @@ export default function ResortDetail({ resort, snapshot }: {
             ))}
           </div>
         )}
+
+        {/* Snow depth analysis */}
+        {snapshot && resort.snow_data && (() => {
+          const current7day = parseFloat(snapshot.forecast.total_7day_snow_cm);
+          const avg = resort.snow_data.avg_seasonal_cm;
+          const pctOfAvg = avg > 0 ? Math.round((current7day / avg) * 100) : 0;
+          const depthNow = allDays[0]?.snow_depth_cm ?? 0;
+          return (
+            <div>
+              <h2 style={{ margin: "0 0 14px", fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                ❄️ Snow Conditions
+              </h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
+                {[
+                  { label: "BASE DEPTH NOW", value: `${depthNow} cm`, color: t.colors.accentBlue, sub: `typical base: ${resort.snow_data.base_depth_cm}cm` },
+                  { label: "SUMMIT DEPTH", value: `${resort.snow_data.summit_depth_cm} cm`, color: t.colors.textPrimary, sub: "typical maximum" },
+                  { label: "7-DAY SNOW", value: `${snapshot.forecast.total_7day_snow_cm} cm`, color: t.colors.accentBlue, sub: "forecast total" },
+                  { label: "VS SEASONAL AVG", value: `${pctOfAvg}%`, color: pctOfAvg >= 100 ? t.colors.accentGreen : pctOfAvg >= 70 ? t.colors.accentYellow : t.colors.accentRed, sub: `avg: ${avg}cm/season` },
+                ].map(s => (
+                  <div key={s.label} style={{ background: t.colors.statBg, borderRadius: t.card.statRadius, padding: 14 }}>
+                    <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: t.fontSize.detailValue, fontWeight: 800, color: s.color, fontFamily: t.fonts.mono }}>{s.value}</div>
+                    <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted, marginTop: 2 }}>{s.sub}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* 7-day forecast */}
         {snapshot && (

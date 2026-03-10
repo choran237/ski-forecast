@@ -203,10 +203,10 @@ function FlightBox({ airportCode, airportName, departDate, returnDate }: {
   );
 }
 
-function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate }: {
+function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, displayCurrency }: {
   resort: ResortSnapshot; prev?: ResortSnapshot;
   isFav: boolean; onToggleFav: () => void;
-  departDate: string; returnDate: string;
+  departDate: string; returnDate: string; displayCurrency: string;
 }) {
   const { next_3_days, following_4_days, total_7day_snow_cm } = resort.forecast;
   const liftsPercent = Math.round((resort.lifts.open / resort.lifts.total) * 100);
@@ -260,7 +260,7 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate }
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
         <StatBox
           label="Lifts Open"
           value={<span style={{ color: t.colors.accentGreen }}>{resort.lifts.open}</span>}
@@ -268,25 +268,63 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate }
           barPct={liftsPercent} barColor={t.colors.accentGreen}
         />
         <StatBox
-          label="Snow Depth"
-          value={<>{next_3_days[0]?.snow_depth_cm ?? "—"}<span style={{ fontSize: 12, color: t.colors.textMuted }}> cm</span></>}
-          sub="at resort level"
+          label="Km of Runs"
+          value={<span style={{ color: t.colors.accentPurple }}>{resortMeta?.km_of_runs ?? "—"}</span>}
+          sub={`${resortMeta?.total_runs ?? "—"} runs`}
+        />
+        <StatBox
+          label="3-Day Pass"
+          value={<span style={{ color: t.colors.accentGreen }}>{resortMeta?.ski_pass ? formatPrice(resortMeta.ski_pass.day_3, resortMeta.ski_pass.currency, displayCurrency) : "—"}</span>}
+          sub="ski pass"
         />
         <StatBox
           label="Ski School"
-          value={<span style={{ color: t.colors.accentYellow }}>{resortMeta?.ski_schools[0]?.price_per_hour ?? resort.private_instruction.price_per_hour}</span>}
-          sub={`${resort.private_instruction.currency}/hr cheapest`}
+          value={<span style={{ color: t.colors.accentYellow }}>{resortMeta?.ski_schools[0] ? formatPrice(resortMeta.ski_schools[0].price_per_hour, resortMeta.ski_schools[0].currency, displayCurrency) : "—"}</span>}
+          sub="/hr cheapest"
         />
       </div>
 
-      {resortMeta && (
-        <FlightBox
-          airportCode={resortMeta.primary_airport.code}
-          airportName={resortMeta.primary_airport.name}
-          departDate={departDate}
-          returnDate={returnDate}
-        />
-      )}
+      {resortMeta && (() => {
+        const base = resortMeta.snow_data.base_depth_cm;
+        const summit = resortMeta.snow_data.summit_depth_cm;
+        const avg = resortMeta.snow_data.avg_seasonal_cm;
+        const current7day = parseFloat(resort.forecast.total_7day_snow_cm);
+        const pctOfAvg = avg > 0 ? Math.round((current7day / avg) * 100) : 0;
+        const depthNow = next_3_days[0]?.snow_depth_cm ?? 0;
+        const transitHrs = resortMeta.primary_airport.transit_hours;
+        return (
+          <>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
+                <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>BASE</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.mono }}>{depthNow}<span style={{ fontSize: 10, color: t.colors.textMuted }}>cm</span></div>
+                <div style={{ fontSize: 9, color: t.colors.textFaint }}>now · {base}cm avg</div>
+              </div>
+              <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
+                <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>SUMMIT</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.mono }}>{summit}<span style={{ fontSize: 10, color: t.colors.textMuted }}>cm</span></div>
+                <div style={{ fontSize: 9, color: t.colors.textFaint }}>typical max depth</div>
+              </div>
+              <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
+                <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>VS AVG</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: pctOfAvg >= 100 ? t.colors.accentGreen : pctOfAvg >= 70 ? t.colors.accentYellow : t.colors.accentRed, fontFamily: t.fonts.mono }}>{pctOfAvg}<span style={{ fontSize: 10, color: t.colors.textMuted }}>%</span></div>
+                <div style={{ fontSize: 9, color: t.colors.textFaint }}>of {avg}cm seasonal</div>
+              </div>
+              <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
+                <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>TRANSFER</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: transitHrs <= 1.5 ? t.colors.accentGreen : transitHrs <= 2.5 ? t.colors.accentYellow : t.colors.textPrimary, fontFamily: t.fonts.mono }}>{transitHrs}<span style={{ fontSize: 10, color: t.colors.textMuted }}>h</span></div>
+                <div style={{ fontSize: 9, color: t.colors.textFaint }}>{resortMeta.primary_airport.code} → resort</div>
+              </div>
+            </div>
+            <FlightBox
+              airportCode={resortMeta.primary_airport.code}
+              airportName={resortMeta.primary_airport.name}
+              departDate={departDate}
+              returnDate={returnDate}
+            />
+          </>
+        );
+      })()}
     </div>
   );
 }
@@ -440,7 +478,8 @@ function TableView({ latest, prev, favourites, onToggleFav, displayCurrency }: {
             <Th col="depth" label="Depth" />
             <Th col="rating" label="Rating" />
             <Th col="lifts" label="Lifts" />
-            <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Ski School (cheapest)</th>
+            <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Km Runs</th>
+                  <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Ski School (cheapest)</th>
             <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Airport</th>
             <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>★</th>
           </tr>
@@ -473,6 +512,9 @@ function TableView({ latest, prev, favourites, onToggleFav, displayCurrency }: {
                 <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
                   <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.accentGreen, fontFamily: t.fonts.mono }}>{r.lifts.open}/{r.lifts.total}</span>
                   <span style={{ fontSize: 10, color: t.colors.textMuted, marginLeft: 4 }}>({liftsPercent}%)</span>
+                </td>
+                <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
+                  {resortMeta ? <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.accentPurple, fontFamily: t.fonts.mono }}>{resortMeta.km_of_runs}km<span style={{ color: t.colors.textMuted, fontSize: 10 }}> / {resortMeta.total_runs}r</span></span> : "—"}
                 </td>
                 <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
                   {resortMeta ? (
@@ -561,6 +603,9 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [showFilters, setShowFilters] = useState(false);
   const [minLifts, setMinLifts] = useState(0);
   const [minRating, setMinRating] = useState(0);
+  const [minKmRuns, setMinKmRuns] = useState(0);
+  const [maxTransitHours, setMaxTransitHours] = useState(0);
+  const [maxFlightHours, setMaxFlightHours] = useState(0);
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
 
@@ -676,12 +721,12 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                 </div>
                 <button onClick={() => setShowFilters(f => !f)} style={{
                   padding: "6px 14px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.body,
-                  border: `1px solid ${(showFilters || minLifts > 0 || minRating > 0) ? t.colors.accentBlue : t.colors.borderSubtle}`,
-                  background: (showFilters || minLifts > 0 || minRating > 0) ? "#0a1f35" : "transparent",
-                  color: (showFilters || minLifts > 0 || minRating > 0) ? t.colors.accentBlue : t.colors.tabInactiveText,
+                  border: `1px solid ${(showFilters || minLifts > 0 || minRating > 0 || minKmRuns > 0 || maxTransitHours > 0 || maxFlightHours > 0) ? t.colors.accentBlue : t.colors.borderSubtle}`,
+                  background: (showFilters || minLifts > 0 || minRating > 0 || minKmRuns > 0 || maxTransitHours > 0 || maxFlightHours > 0) ? "#0a1f35" : "transparent",
+                  color: (showFilters || minLifts > 0 || minRating > 0 || minKmRuns > 0 || maxTransitHours > 0 || maxFlightHours > 0) ? t.colors.accentBlue : t.colors.tabInactiveText,
                   fontSize: t.fontSize.tabLabel,
                 }}>
-                  ⚙ Filters{(minLifts > 0 || minRating > 0) ? ` (${[minLifts > 0 ? `${minLifts}+ lifts` : "", minRating > 0 ? `${minRating}+ ★` : ""].filter(Boolean).join(", ")})` : ""}
+                  ⚙ Filters{(minLifts > 0 || minRating > 0 || minKmRuns > 0 || maxTransitHours > 0 || maxFlightHours > 0) ? " •" : ""}
                 </button>
                 <button onClick={() => { setMinRating(4.3); setMinLifts(30); setShowFilters(false); }} style={{
                   padding: "6px 14px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.body,
@@ -690,8 +735,8 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                   color: (minRating === 4.3 && minLifts === 30) ? t.colors.accentYellow : t.colors.tabInactiveText,
                   fontSize: t.fontSize.tabLabel,
                 }}>🏆 Top Resorts</button>
-                {(minLifts > 0 || minRating > 0) && (
-                  <button onClick={() => { setMinLifts(0); setMinRating(0); }} style={{
+                {(minLifts > 0 || minRating > 0 || minKmRuns > 0 || maxTransitHours > 0 || maxFlightHours > 0) && (
+                  <button onClick={() => { setMinLifts(0); setMinRating(0); setMinKmRuns(0); setMaxTransitHours(0); setMaxFlightHours(0); }} style={{
                     padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.body,
                     border: `1px solid ${t.colors.borderSubtle}`, background: "transparent",
                     color: t.colors.textMuted, fontSize: t.fontSize.tabLabel,
@@ -722,6 +767,39 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                       <span>Any</span><span>3.0★</span><span>4.0★</span><span>4.5★</span><span>5★</span>
                     </div>
                   </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 240 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8 }}>MIN KM OF RUNS</span>
+                      <span style={{ fontSize: t.fontSize.detailValue, fontWeight: 700, color: t.colors.accentGreen, fontFamily: t.fonts.mono, minWidth: 50, textAlign: "right" }}>{minKmRuns === 0 ? "Any" : `${minKmRuns}km+`}</span>
+                    </div>
+                    <input type="range" min={0} max={650} step={25} value={minKmRuns} onChange={e => setMinKmRuns(Number(e.target.value))}
+                      style={{ width: "100%", accentColor: t.colors.accentGreen, cursor: "pointer" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: t.colors.textFaint }}>
+                      <span>Any</span><span>100km</span><span>250km</span><span>400km</span><span>650km</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 240 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8 }}>MAX TRANSFER TIME</span>
+                      <span style={{ fontSize: t.fontSize.detailValue, fontWeight: 700, color: t.colors.accentPurple, fontFamily: t.fonts.mono, minWidth: 50, textAlign: "right" }}>{maxTransitHours === 0 ? "Any" : `≤${maxTransitHours}h`}</span>
+                    </div>
+                    <input type="range" min={0} max={5} step={0.25} value={maxTransitHours} onChange={e => setMaxTransitHours(Number(e.target.value))}
+                      style={{ width: "100%", accentColor: t.colors.accentPurple, cursor: "pointer" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: t.colors.textFaint }}>
+                      <span>Any</span><span>1.5h</span><span>2.5h</span><span>3.5h</span><span>5h</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 240 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8 }}>MAX FLIGHT TIME</span>
+                      <span style={{ fontSize: t.fontSize.detailValue, fontWeight: 700, color: t.colors.accentBlue, fontFamily: t.fonts.mono, minWidth: 50, textAlign: "right" }}>{maxFlightHours === 0 ? "Any" : `≤${maxFlightHours}h`}</span>
+                    </div>
+                    <input type="range" min={0} max={5} step={0.25} value={maxFlightHours} onChange={e => setMaxFlightHours(Number(e.target.value))}
+                      style={{ width: "100%", accentColor: t.colors.accentBlue, cursor: "pointer" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: t.colors.textFaint }}>
+                      <span>Any</span><span>1.5h</span><span>2.5h</span><span>3.5h</span><span>5h</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -729,7 +807,14 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
               <>
                 {(() => {
                   const filtered = [...latest.resorts]
-                    .filter(r => r.lifts.total >= minLifts && r.composite_rating >= minRating)
+                    .filter(r => {
+                      const meta = RESORTS.find(x => x.id === r.resort_id);
+                      if (r.lifts.total < minLifts) return false;
+                      if (r.composite_rating < minRating) return false;
+                      if (meta && minKmRuns > 0 && meta.km_of_runs < minKmRuns) return false;
+                      if (meta && maxTransitHours > 0 && meta.primary_airport.transit_hours > maxTransitHours) return false;
+                      return true;
+                    })
                     .sort((a, b) => {
                       if (top6Sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
                       if (top6Sort === "rating") return b.composite_rating - a.composite_rating;
@@ -745,7 +830,7 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                           prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
                           isFav={favourites.includes(resort.resort_id)}
                           onToggleFav={() => toggleFav(resort.resort_id)}
-                          departDate={departDate} returnDate={returnDate}
+                          departDate={departDate} returnDate={returnDate} displayCurrency={displayCurrency}
                         />
                       ))}
                     </div>
