@@ -142,15 +142,20 @@ function temp_color(temp: number): string {
 // ── Airport flight row ────────────────────────────────────────────────────────
 
 function AirportFlightRow({
-  airportCode, airportName, distanceKm, departDate, returnDate, flightData, loading,
+  airportCode, airportName, distanceKm, transitHours, departDate, returnDate, flightData, loading,
   londonCode,
 }: {
-  airportCode: string; airportName: string; distanceKm: number;
+  airportCode: string; airportName: string; distanceKm: number; transitHours: number;
   departDate: string; returnDate: string;
   flightData: any; loading: boolean;
   londonCode: string;
 }) {
   const skyscannerUrl = `https://www.skyscanner.net/transport/flights/${londonCode.toLowerCase()}/${airportCode.toLowerCase()}/${departDate.replace(/-/g,"").slice(2)}/${returnDate.replace(/-/g,"").slice(2)}/?adults=1&currency=GBP`;
+  const transitLabel = transitHours < 1
+    ? `${Math.round(transitHours * 60)}min transfer`
+    : transitHours % 1 === 0
+      ? `${transitHours}h transfer`
+      : `${Math.floor(transitHours)}h${Math.round((transitHours % 1) * 60)}min transfer`;
 
   return (
     <div style={{
@@ -170,7 +175,7 @@ function AirportFlightRow({
             background: t.colors.statBg, borderRadius: 4, padding: "2px 6px" }}>{airportCode}</span>
         </div>
         <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textSecondary, marginTop: 4 }}>
-          {airportName} · {distanceKm} km
+          {airportName} · {distanceKm} km · 🚌 {transitLabel}
         </div>
       </div>
 
@@ -258,7 +263,7 @@ export default function ResortDetail({ resort, snapshot }: {
   const LONDON_AIRPORTS = ["LTN", "LHR", "LGW", "STN"] as const;
   type LondonCode = typeof LONDON_AIRPORTS[number];
 
-  type FlightRow = { londonCode: LondonCode; destCode: string; destName: string; distanceKm: number; flightKey: string };
+  type FlightRow = { londonCode: LondonCode; destCode: string; destName: string; distanceKm: number; transitHours: number; flightKey: string };
 
   const flightRows: FlightRow[] = [];
   for (const ap of allAirports) {
@@ -270,6 +275,7 @@ export default function ResortDetail({ resort, snapshot }: {
           destCode: ap.code,
           destName: ap.name,
           distanceKm: ap.distance_km,
+          transitHours: ap.transit_hours,
           flightKey: `${lon}:${ap.code}`,
         });
       }
@@ -620,6 +626,7 @@ export default function ResortDetail({ resort, snapshot }: {
                 airportCode={row.destCode}
                 airportName={row.destName}
                 distanceKm={row.distanceKm}
+                transitHours={row.transitHours}
                 londonCode={row.londonCode}
                 departDate={departDate}
                 returnDate={returnDate}
