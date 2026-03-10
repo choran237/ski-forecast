@@ -118,95 +118,140 @@ function StatBox({ label, value, sub, barPct, barColor }: {
   );
 }
 
-function FlightBox({ airportCode, airportName, departDate, returnDate, onData, defaultFlightMins, departureAirport }: {
-  airportCode: string; airportName: string; departDate: string; returnDate: string;
-  onData?: (d: any) => void; defaultFlightMins?: number; departureAirport: string;
+function FlightBox({ routes, departDate, returnDate, onBestData, preferredDeparture }: {
+  routes: { londonCode: string; destCode: string; destName: string; flightMins: number }[];
+  departDate: string; returnDate: string;
+  onBestData?: (d: any, londonCode: string, destCode: string) => void;
+  preferredDeparture: string;
 }) {
-  const [data, setData] = useState<any>(null);
+  const [prices, setPrices] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const cacheKey = `flight:${airportCode}:${departDate}:${returnDate}`;
 
+  // Load from sessionStorage on mount / date change
   useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem(cacheKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setData(parsed);
-        onData?.(parsed);
-      }
-    } catch {}
-  }, [cacheKey]);
-
-  const fetchPrice = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/flights?airport=${airportCode}&depart=${departDate}&return=${returnDate}&from=${departureAirport}`);
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "No flights found");
-      setData(json);
-      try { sessionStorage.setItem(cacheKey, JSON.stringify(json)); } catch {}
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+    const cached: Record<string, any> = {};
+    for (const r of routes) {
+      const key = `flight:${r.londonCode}:${r.destCode}:${departDate}:${returnDate}`;
+      try {
+        const s = sessionStorage.getItem(key);
+        if (s) cached[`${r.londonCode}:${r.destCode}`] = JSON.parse(s);
+      } catch {}
     }
-  }, [airportCode, departDate, returnDate, cacheKey]);
+    if (Object.keys(cached).length > 0) setPrices(cached);
+  }, [departDate, returnDate, routes.map(r => r.londonCode + r.destCode).join(",")]);
 
-  const skyscannerUrl = `https://www.skyscanner.net/transport/flights/${departureAirport.toLowerCase()}/${airportCode.toLowerCase()}/${departDate.replace(/-/g,"").slice(2)}/${returnDate.replace(/-/g,"").slice(2)}/?adults=1&currency=GBP`;
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    const results: Record<string, any> = {};
+    await Promise.all(routes.map(async (r) => {
+      const key = `${r.londonCode}:${r.destCode}`;
+      const cacheKey = `flight:${r.londonCode}:${r.destCode}:${departDate}:${returnDate}`;
+      try {
+        const res = await fetch(`/api/flights?airport=${r.destCode}&depart=${departDate}&return=${returnDate}&from=${r.londonCode}`);
+        const json = await res.json();
+        if (json.ok) {
+          results[key] = json;
+          try { sessionStorage.setItem(cacheKey, JSON.stringify(json)); } catch {}
+        }
+      } catch {}
+    }));
+    setPrices(results);
+    setLoading(false);
+  }, [routes, departDate, returnDate]);
+
+  // Find best result: direct-only, prefer chosen departure airport, then cheapest direct
+  const LONDON_PRIORITY = ["LTN", "LHR", "LGW", "STN"];
+  const directPrices = Object.entries(prices).filter(([, data]) =>
+    data?.price && (data.stops === 0 || data.stops == null)
+  );
+  // Sort: preferred departure first, then by price
+  const sorted = [...directPrices].sort(([keyA, dataA], [keyB, dataB]) => {
+    const lonA = keyA.split(":")[0];
+    const lonB = keyB.split(":")[0];
+    const prefA = lonA === preferredDeparture ? -1 : LONDON_PRIORITY.indexOf(lonA);
+    const prefB = lonB === preferredDeparture ? -1 : LONDON_PRIORITY.indexOf(lonB);
+    if (prefA !== prefB) return prefA - prefB;
+    return (dataA.price ?? 999999) - (dataB.price ?? 999999);
+  });
+  const best = sorted.length > 0 ? { key: sorted[0][0], data: sorted[0][1] } : null;
+
+  // Notify parent of best result for DOOR-DOOR calc
+  useEffect(() => {
+    if (best) {
+      const [lon, dest] = best.key.split(":");
+      onBestData?.(best.data, lon, dest);
+    }
+  }, [best?.key, best?.data?.price]);
+
+  const bestRoute = best ? routes.find(r => `${r.londonCode}:${r.destCode}` === best.key) : null;
+  const skyscannerUrl = best
+    ? `https://www.skyscanner.net/transport/flights/${best.key.split(":")[0].toLowerCase()}/${best.key.split(":")[1].toLowerCase()}/${departDate.replace(/-/g,"").slice(2)}/${returnDate.replace(/-/g,"").slice(2)}/?adults=1&currency=GBP`
+    : "#";
+
+  // Before prices loaded: show preferred departure route as default
+  const defaultRoute = routes.find(r => r.londonCode === preferredDeparture) ?? routes[0];
 
   return (
     <div style={{ background: t.colors.flightBg, border: `1px solid ${t.colors.flightBorder}`, borderRadius: t.card.statRadius, padding: t.card.statPadding }}>
       <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span>✈ FLIGHTS · {departureAirport} → {airportCode}</span>
+        <span>
+          ✈ FLIGHTS ·{" "}
+          {best
+            ? <span style={{ color: t.colors.accentBlue }}>{best.key.split(":")[0]}</span>
+            : <span style={{ color: t.colors.accentBlue }}>{defaultRoute?.londonCode ?? "—"}</span>
+          }
+          {" → "}
+          {best ? best.key.split(":")[1] : (defaultRoute?.destCode ?? "—")}
+        </span>
         <span style={{ color: t.colors.textFaint, fontFamily: t.fonts.mono }}>
-          {formatDuration(data?.duration_mins ?? defaultFlightMins ?? null)}
+          {best ? formatDuration(best.data.duration_mins) : formatDuration(defaultRoute?.flightMins ?? null)}
         </span>
       </div>
-      {data ? (
+      {best ? (
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: t.fontSize.flightPrice, fontWeight: 800, fontFamily: t.fonts.mono, color: priceLevelColor(data.price_level) }}>
-              £{data.price}
+            <span style={{ fontSize: t.fontSize.flightPrice, fontWeight: 800, fontFamily: t.fonts.mono, color: priceLevelColor(best.data.price_level) }}>
+              £{best.data.price}
             </span>
-            {data.price_level && (
-              <span style={{ fontSize: t.fontSize.badge, color: priceLevelColor(data.price_level) }}>{data.price_level}</span>
+            {best.data.price_level && (
+              <span style={{ fontSize: t.fontSize.badge, color: priceLevelColor(best.data.price_level) }}>{best.data.price_level}</span>
             )}
           </div>
-          <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted, marginTop: 2 }}>
-            {data.airline} · Direct{data.duration_mins ? ` · ${formatDuration(data.duration_mins)}` : ""}
+          <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted }}>
+            {best.data.airline} · {best.data.stops === 0 ? "Direct" : `${best.data.stops} stop`}
+            {best.data.duration_mins ? ` · ${formatDuration(best.data.duration_mins)}` : ""}
           </div>
-          <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textFaint, marginTop: 1 }}>
-            {data.cached ? "Cached" : "Live"} · {new Date(data.fetched_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+          <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textFaint }}>
+            Direct · best of {routes.length} route{routes.length > 1 ? "s" : ""} · {best.data.cached ? "Cached" : "Live"}
           </div>
         </div>
-      ) : error ? (
-        <div style={{ fontSize: t.fontSize.subtext, color: t.colors.accentRed }}>{error}</div>
+      ) : loading ? (
+        <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>Checking {routes.length} route{routes.length > 1 ? "s" : ""}…</div>
       ) : (
-        <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>{airportName} · tap to check price</div>
+        <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>
+          {routes.length} route{routes.length > 1 ? "s" : ""} available · press Refresh
+        </div>
       )}
-      <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-        <button
-          onClick={e => { e.stopPropagation(); fetchPrice(); }}
-          disabled={loading}
-          style={{
-            flex: 1, padding: "6px 0", borderRadius: 8, border: "none",
-            background: loading ? t.colors.flightBtnLoading : t.colors.flightBtn,
-            color: loading ? t.colors.textMuted : "#fff",
-            fontSize: t.fontSize.flightSub, fontWeight: 600,
-            cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body,
-          }}
-        >{loading ? "Checking…" : data ? "↻ Refresh" : "Get Price"}</button>
-        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{
-          padding: "6px 10px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`,
+      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+        <button onClick={fetchAll} disabled={loading} style={{
+          flex: 1, padding: "8px 0", borderRadius: 8, border: "none",
+          background: loading ? t.colors.flightBtnLoading : t.colors.flightBtn,
+          color: loading ? t.colors.textMuted : "#fff",
+          fontSize: t.fontSize.subtext, fontWeight: 600,
+          cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body,
+        }}>
+          {loading ? "⟳ Checking…" : "⟳ Refresh"}
+        </button>
+        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" style={{
+          padding: "8px 14px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`,
           background: "transparent", color: t.colors.textSecondary,
-          fontSize: t.fontSize.flightSub, textDecoration: "none", display: "flex", alignItems: "center",
+          fontSize: t.fontSize.subtext, textDecoration: "none",
         }}>Sky ↗</a>
       </div>
     </div>
   );
 }
+
 
 function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, displayCurrency, preferredDeparture }: {
   resort: ResortSnapshot; prev?: ResortSnapshot;
