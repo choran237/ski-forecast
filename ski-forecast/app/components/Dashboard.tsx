@@ -204,22 +204,6 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
           fontSize: t.fontSize.flightSub, textDecoration: "none", display: "flex", alignItems: "center",
         }}>Sky ↗</a>
       </div>
-
-      {showFlightPwModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
-            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
-            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
-            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
-            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -233,17 +217,6 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
   const liftsPercent = Math.round((resort.lifts.open / resort.lifts.total) * 100);
   const resortMeta = RESORTS.find(r => r.id === resort.resort_id);
   const [flightData, setFlightData] = useState<any>(null);
-
-  const fetchAllFlights = async () => {
-    const airports = [...new Set(RESORTS.map(r => r.primary_airport.code))];
-    setFlightsLoading(true); setFlightsDone(0);
-    for (const code of airports) {
-      await fetch(`/api/flights?airport=${code}&depart=${departDate}&return=${returnDate}`);
-      setFlightsDone(n => n + 1);
-      await new Promise(res => setTimeout(res, 300));
-    }
-    setFlightsLoading(false);
-  };
 
   const router = useRouter();
 
@@ -400,22 +373,6 @@ function FavouritesStrip({ latest, favourites, onToggleFav }: {
           </div>
         ))}
       </div>
-
-      {showFlightPwModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
-            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
-            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
-            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
-            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -486,22 +443,6 @@ function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly }
           <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, padding: "10px 0" }}>No favourites yet</div>
         )}
       </div>
-
-      {showFlightPwModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
-            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
-            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
-            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
-            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -657,22 +598,6 @@ function HistoryPanel({ history }: { history: ForecastRun[] }) {
           </div>
         ))}
       </div>
-
-      {showFlightPwModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
-            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
-            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
-            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
-            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -697,13 +622,8 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [maxFlightHours, setMaxFlightHours] = useState(0);
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
-  const [flightsLoading, setFlightsLoading] = useState(false);
-  const [flightsDone, setFlightsDone] = useState(0);
-  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
-  const [flightPwInput, setFlightPwInput] = useState("");
-  const [flightPwError, setFlightPwError] = useState(false);
   const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
+  const [calendarMonth, setCalendarMonth] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() });
 
   // On mount, always fetch fresh history so deltas are correct on first load
   useEffect(() => {
@@ -775,35 +695,32 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted, position: "relative" }}>
                 <span>✈ Depart</span>
-                <button onClick={e => { e.stopPropagation(); setCalendarTarget(calendarTarget === "depart" ? null : "depart"); setCalendarMonth(() => { const d = new Date(departDate); return { year: d.getFullYear(), month: d.getMonth() }; }); }} style={{ background: t.colors.cardBg, border: `1px solid ${calendarTarget === "depart" ? t.colors.accentBlue : t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>{departDate}</button>
+                <button onClick={e => { e.stopPropagation(); const d = new Date(departDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(t => t === "depart" ? null : "depart"); }} style={{ background: t.colors.cardBg, border: `1px solid ${calendarTarget === "depart" ? "#4a9edd" : t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>{departDate}</button>
                 <span>Return</span>
-                <button onClick={e => { e.stopPropagation(); setCalendarTarget(calendarTarget === "return" ? null : "return"); setCalendarMonth(() => { const d = new Date(returnDate); return { year: d.getFullYear(), month: d.getMonth() }; }); }} style={{ background: t.colors.cardBg, border: `1px solid ${calendarTarget === "return" ? t.colors.accentBlue : t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>{returnDate}</button>
+                <button onClick={e => { e.stopPropagation(); const d = new Date(returnDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(t => t === "return" ? null : "return"); }} style={{ background: t.colors.cardBg, border: `1px solid ${calendarTarget === "return" ? "#4a9edd" : t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>{returnDate}</button>
                 {calendarTarget && (() => {
                   const { year, month } = calendarMonth;
                   const firstDay = new Date(year, month, 1).getDay();
                   const daysInMonth = new Date(year, month + 1, 0).getDate();
-                  const cells: (number|null)[] = [...Array(firstDay).fill(null), ...Array.from({length: daysInMonth}, (_,i) => i+1)];
+                  const cells: (number|null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
                   while (cells.length % 7 !== 0) cells.push(null);
-                  const monthName = new Date(year, month).toLocaleString("default", { month: "long", year: "numeric" });
                   const today = new Date().toISOString().split("T")[0];
                   return (
                     <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "110%", left: 0, zIndex: 100, background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 12, padding: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 260 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16 }}>‹</button>
-                        <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{monthName}</span>
-                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16 }}>›</button>
+                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>‹</button>
+                        <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{new Date(year, month).toLocaleString("default", { month: "long", year: "numeric" })}</span>
+                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>›</button>
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, textAlign: "center" }}>
-                        {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => <div key={d} style={{ fontSize: 10, color: "#7ba7cc", padding: "2px 0" }}>{d}</div>)}
+                        {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => <div key={d} style={{ fontSize: 10, color: "#7ba7cc", paddingBottom: 4 }}>{d}</div>)}
                         {cells.map((day, i) => {
                           if (!day) return <div key={i} />;
-                          const iso = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+                          const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                           const isSelected = iso === (calendarTarget === "depart" ? departDate : returnDate);
                           const inRange = iso > departDate && iso < returnDate;
                           const isPast = iso < today;
-                          return (
-                            <div key={i} onClick={() => { if (isPast) return; if (calendarTarget === "depart") { setDepartDate(iso); if (iso >= returnDate) setReturnDate(sundayAfter(iso)); } else { if (iso > departDate) setReturnDate(iso); } setCalendarTarget(null); }} style={{ padding: "4px 2px", borderRadius: 4, fontSize: 12, cursor: isPast ? "default" : "pointer", background: isSelected ? "#1d6fa4" : inRange ? "#0d3a5c" : "transparent", color: isPast ? "#3a5070" : isSelected ? "#fff" : "#c8dff0", fontWeight: isSelected ? 700 : 400 }}>{day}</div>
-                          );
+                          return <div key={i} onClick={() => { if (isPast) return; if (calendarTarget === "depart") { setDepartDate(iso); if (iso >= returnDate) setReturnDate(sundayAfter(iso)); } else { if (iso > departDate) setReturnDate(iso); } setCalendarTarget(null); }} style={{ padding: "4px 2px", borderRadius: 4, fontSize: 12, cursor: isPast ? "default" : "pointer", background: isSelected ? "#1d6fa4" : inRange ? "#0d3a5c" : "transparent", color: isPast ? "#3a5070" : isSelected ? "#fff" : "#c8dff0", fontWeight: isSelected ? 700 : 400 }}>{day}</div>;
                         })}
                       </div>
                     </div>
@@ -817,11 +734,6 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
               >
                 {CURRENCY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
-              {flightsLoading ? (
-                <span style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>Fetching prices… {flightsDone}/{[...new Set(RESORTS.map(r => r.primary_airport.code))].length}</span>
-              ) : (
-                <button onClick={() => setShowFlightPwModal(true)} style={{ background: "#0a3a1a", border: "1px solid #1a6a3a", borderRadius: 8, padding: "5px 12px", color: "#4ade80", fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>✈ Get All Prices</button>
-              )}
               <a href="/api/export-csv" style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`, background: "transparent", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, textDecoration: "none", fontFamily: t.fonts.body, opacity: latest ? 1 : 0.4 }}>↓ CSV</a>
               <button onClick={refresh} disabled={loading} style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: loading ? t.colors.refreshBtnDisabled : t.colors.refreshBtn, color: loading ? t.colors.textMuted : "#fff", fontSize: t.fontSize.subtext, fontWeight: 600, cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body }}>
                 {loading ? "⟳ Fetching…" : "⟳ Refresh"}
@@ -990,22 +902,6 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
           </div>
         )}
       </div>
-
-      {showFlightPwModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
-            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
-            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
-            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
-            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
