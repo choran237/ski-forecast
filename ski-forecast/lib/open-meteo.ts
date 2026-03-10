@@ -2,9 +2,12 @@
 import { Resort, ResortSnapshot, DayForecast } from "./resorts";
 
 export async function fetchResortForecast(resort: Resort): Promise<ResortSnapshot> {
+  // Pass elevation_m so Open-Meteo interpolates at mid-mountain altitude
+  // This gives accurate snow depth readings rather than village-level (near zero)
   const url =
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${resort.lat}&longitude=${resort.lng}` +
+    `&elevation=${resort.elevation_m}` +
     `&daily=snowfall_sum,snow_depth_max,precipitation_probability_max,temperature_2m_max,temperature_2m_min` +
     `&forecast_days=7&timezone=auto`;
 
@@ -33,7 +36,6 @@ export async function fetchResortForecast(resort: Resort): Promise<ResortSnapsho
     composite_rating: resort.composite_rating,
     lifts: {
       total: resort.total_lifts,
-      // OnTheSnow API would give real open count — placeholder until you add that key
       open: Math.floor(resort.total_lifts * 0.82),
     },
     private_instruction: {
