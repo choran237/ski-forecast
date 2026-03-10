@@ -1424,4 +1424,3 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
       )}
   );
 }
- 
