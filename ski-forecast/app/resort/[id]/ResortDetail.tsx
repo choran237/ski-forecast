@@ -187,12 +187,12 @@ function AirportFlightRow({
                 <span style={{ fontSize: t.fontSize.badge, color: priceLevelColor(flightData.price_level) }}>{flightData.price_level}</span>
               )}
             </div>
-            <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textMuted }}>
-              {flightData.airline} · {flightData.stops === 0 ? "Direct" : `${flightData.stops} stop`}
+            <div style={{ fontSize: t.fontSize.flightSub, color: flightData.stops === 0 ? t.colors.textMuted : t.colors.accentRed ?? "#f87171" }}>
+              {flightData.airline} · {flightData.stops === 0 ? "Direct" : `⚠ ${flightData.stops} stop — not direct`}
               {flightData.duration_mins ? ` · ${formatDuration(flightData.duration_mins)}` : ""}
             </div>
             <div style={{ fontSize: t.fontSize.flightSub, color: t.colors.textFaint }}>
-              {flightData.cached ? "Cached" : "Live"}
+              {flightData.cached ? "Cached · refresh to update" : "Live"}
             </div>
           </div>
         ) : (
@@ -222,6 +222,29 @@ export default function ResortDetail({ resort, snapshot }: {
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
   const [flightData, setFlightData] = useState<Record<string, any>>({});
   const [flightsLoading, setFlightsLoading] = useState(false);
+
+  // Summary state
+  const [summary, setSummary] = useState<{ overview: string; news: string; sentiment: string } | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryCached, setSummaryCached] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSummaryLoading(true);
+    setSummaryError(null);
+    fetch(`/api/resort-summary?id=${encodeURIComponent(resort.id)}&name=${encodeURIComponent(resort.name)}&country=${encodeURIComponent(resort.country)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok && d.sections) {
+          setSummary(d.sections);
+          setSummaryCached(d.cached ?? false);
+        } else {
+          setSummaryError(d.error ?? "Unknown error from API");
+        }
+      })
+      .catch(e => setSummaryError(e.message))
+      .finally(() => setSummaryLoading(false));
+  }, [resort.id]);
 
   const allAirports = [resort.primary_airport, ...resort.alt_airports];
 
@@ -317,6 +340,63 @@ export default function ResortDetail({ resort, snapshot }: {
 
       <div style={{ maxWidth: 1000, margin: "0 auto", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 28 }}>
 
+        {/* AI Summary */}
+        <div style={{
+          background: t.colors.cardBg,
+          border: `1px solid ${t.colors.borderSubtle}`,
+          borderRadius: 16,
+          padding: "20px 24px",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h2 style={{ margin: 0, fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase" }}>
+              ✦ Resort Intelligence
+            </h2>
+            {!summaryLoading && (
+              <span style={{ fontSize: 10, color: t.colors.textFaint }}>
+                {summaryCached ? "Cached · updated daily" : "Live · just fetched"}
+              </span>
+            )}
+          </div>
+
+          {summaryLoading ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {["60%","90%","75%","85%","50%"].map((w, i) => (
+                <div key={i} style={{
+                  height: 12, borderRadius: 6, width: w,
+                  background: t.colors.statBg,
+                  opacity: 0.6,
+                }} />
+              ))}
+              <div style={{ fontSize: 11, color: t.colors.textFaint, marginTop: 4 }}>Researching resort…</div>
+            </div>
+          ) : summary ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {([
+                { label: "🏔 Overview", key: "overview" as const, color: t.colors.accentBlue },
+                { label: "📰 News & Developments", key: "news" as const, color: t.colors.accentYellow },
+                { label: "💬 Skier Sentiment", key: "sentiment" as const, color: t.colors.accentGreen },
+              ] as const).map(({ label, key, color }) => summary[key] ? (
+                <div key={key}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>
+                    {label}
+                  </div>
+                  <div style={{ fontSize: 13, color: t.colors.textSecondary, lineHeight: 1.7 }}>
+                    {summary[key]}
+                  </div>
+                </div>
+              ) : null)}
+            </div>
+          ) : summaryError ? (
+            <div style={{ fontSize: 13, color: t.colors.accentRed ?? "#f87171" }}>
+              ⚠ {summaryError}
+            </div>
+          ) : (
+            <div style={{ fontSize: 13, color: t.colors.textMuted }}>
+              Summary unavailable — try refreshing the page.
+            </div>
+          )}
+        </div>
+
         {/* No data warning */}
         {!snapshot && (
           <div style={{ background: "#1c1400", border: "1px solid #3f2d00", borderRadius: 12, padding: "13px 18px", color: t.colors.accentYellow, fontSize: t.fontSize.subtext }}>
@@ -332,6 +412,9 @@ export default function ResortDetail({ resort, snapshot }: {
               { label: "LIFTS OPEN", value: `${snapshot.lifts.open} / ${snapshot.lifts.total}`, sub: `${liftsPercent}%`, color: t.colors.accentGreen },
               { label: "SNOW DEPTH", value: `${allDays[0]?.snow_depth_cm ?? "—"} cm`, color: t.colors.textPrimary },
               { label: "TOTAL LIFTS", value: resort.total_lifts.toString(), color: t.colors.textPrimary },
+              { label: "1-DAY PASS", value: resort.ski_pass ? `${resort.ski_pass.day_1} ${resort.ski_pass.currency}` : "—", color: t.colors.accentGreen },
+              { label: "3-DAY PASS", value: resort.ski_pass ? `${resort.ski_pass.day_3} ${resort.ski_pass.currency}` : "—", color: t.colors.accentGreen },
+              { label: "6-DAY PASS", value: resort.ski_pass ? `${resort.ski_pass.day_6} ${resort.ski_pass.currency}` : "—", color: t.colors.accentGreen },
               { label: "CHEAPEST SCHOOL", value: `${cheapestSchool.price_per_hour} ${cheapestSchool.currency}`, sub: "per hour", color: t.colors.accentYellow },
             ].map(s => (
               <div key={s.label} style={{ background: t.colors.statBg, borderRadius: t.card.statRadius, padding: 14 }}>
