@@ -652,6 +652,7 @@ function HistoryPanel({ history }: { history: ForecastRun[] }) {
 type ViewMode = "cards" | "table";
 
 export default function Dashboard({ initialHistory }: { initialHistory: ForecastRun[] }) {
+  const router = useRouter();
   const [history, setHistory] = useState<ForecastRun[]>(initialHistory);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
