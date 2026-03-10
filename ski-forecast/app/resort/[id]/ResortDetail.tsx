@@ -221,6 +221,8 @@ export default function ResortDetail({ resort, snapshot }: {
 }) {
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
+  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [flightData, setFlightData] = useState<Record<string, any>>({});
   const [flightsLoading, setFlightsLoading] = useState(false);
 
@@ -322,7 +324,7 @@ export default function ResortDetail({ resort, snapshot }: {
   const cheapestSchool = resort.ski_schools.reduce((a, b) => a.price_per_hour < b.price_per_hour ? a : b);
 
   return (
-    <div style={{ minHeight: "100vh", background: t.colors.pageBg, paddingBottom: 60 }}>
+    <div style={{ minHeight: "100vh", background: t.colors.pageBg, paddingBottom: 60 }} onClick={() => setCalendarTarget(null)}>
 
       {/* Header */}
       <div style={{ background: t.colors.headerBg, borderBottom: `1px solid ${t.colors.borderSubtle}`, padding: "20px 32px", position: "sticky", top: 0, zIndex: 10 }}>
@@ -532,19 +534,63 @@ export default function ResortDetail({ resort, snapshot }: {
 
             {/* Date pickers + fetch all button */}
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted, position: "relative" }}>
                 <span>Depart</span>
-                <input
-                  type="date" value={departDate}
-                  onChange={e => setDepartDate(e.target.value)}
-                  style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }}
-                />
+                <button onClick={e => { e.stopPropagation(); const d = new Date(departDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(ct => ct === "depart" ? null : "depart"); }} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer", minWidth: 100 }}>
+                  📅 {departDate ? new Date(departDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "Pick date"}
+                </button>
                 <span>Return</span>
-                <input
-                  type="date" value={returnDate} min={departDate}
-                  onChange={e => setReturnDate(e.target.value)}
-                  style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }}
-                />
+                <button onClick={e => { e.stopPropagation(); const d = new Date(returnDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(ct => ct === "return" ? null : "return"); }} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer", minWidth: 100 }}>
+                  📅 {returnDate ? new Date(returnDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "Pick date"}
+                </button>
+                {calendarTarget && (() => {
+                  const { year, month } = calendarMonth;
+                  const firstDay = new Date(year, month, 1).getDay();
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  const blanks = (firstDay + 6) % 7;
+                  const today = new Date(); today.setHours(0,0,0,0);
+                  const selected = calendarTarget === "depart" ? departDate : returnDate;
+                  const minDate = calendarTarget === "return" ? departDate : undefined;
+                  const monthName = new Date(year, month).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+                  const cells: (number|null)[] = [];
+                  for (let i = 0; i < blanks; i++) cells.push(null);
+                  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+                  return (
+                    <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "110%", left: 0, zIndex: 100, background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 12, padding: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 280 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16, padding: "2px 8px" }}>‹</button>
+                        <span style={{ color: "#e2e8f0", fontWeight: 600, fontSize: 13 }}>{monthName}</span>
+                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16, padding: "2px 8px" }}>›</button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 6 }}>
+                        {["Mo","Tu","We","Th","Fr","Sa","Su"].map(d => <div key={d} style={{ textAlign: "center", fontSize: 10, color: "#4a6a8a", padding: "2px 0", fontWeight: 600 }}>{d}</div>)}
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+                        {cells.map((day, i) => {
+                          if (!day) return <div key={i} />;
+                          const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+                          const cellDate = new Date(year, month, day);
+                          const isPast = cellDate < today;
+                          const isBeforeMin = minDate && dateStr < minDate;
+                          const isSelected = dateStr === selected;
+                          const isInRange = departDate && returnDate && dateStr > departDate && dateStr < returnDate;
+                          const disabled = isPast || isBeforeMin;
+                          return (
+                            <button key={i} disabled={!!disabled} onClick={() => {
+                              if (calendarTarget === "depart") { setDepartDate(dateStr); if (returnDate && dateStr >= returnDate) setReturnDate(""); }
+                              else setReturnDate(dateStr);
+                              setCalendarTarget(null);
+                            }} style={{ padding: "6px 0", borderRadius: 6, border: "none", textAlign: "center", fontSize: 12, cursor: disabled ? "default" : "pointer", fontFamily: "inherit",
+                              background: isSelected ? "#3b82f6" : isInRange ? "#1e3a5f" : "transparent",
+                              color: disabled ? "#2a4060" : isSelected ? "#fff" : "#c8dff0",
+                              fontWeight: isSelected ? 700 : 400,
+                            }}>{day}</button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <button
                 onClick={fetchAllFlights}
