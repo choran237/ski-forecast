@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
 
   // Check Redis cache
   try {
-    const cached = await redis.get(cacheKey);
-    if (cached) return NextResponse.json(cached);
+    const cached = await redis.get<any>(cacheKey);
+    if (cached) return NextResponse.json({ ...cached, cached: true });
   } catch {}
 
   // Call SerpApi
@@ -53,12 +53,20 @@ export async function GET(req: NextRequest) {
     const best = flights[0];
     const leg = best.flights?.[0];
 
+    // stops = number of layovers (legs - 1). With stops:"0" this should always be 0,
+    // but we derive it from actual legs so the UI is always accurate.
+    const legCount = best.flights?.length ?? 1;
+    const stops = legCount - 1;
+
     const result = {
       ok: true,
       price: best.price,
-      airline: leg?.airline,
+      price_level: best.price_level ?? null,
+      airline: leg?.airline ?? best.flights?.map((f: any) => f.airline).join(", "),
       duration_mins: best.total_duration,
+      stops,
       departure_airport: from,
+      cached: false,
     };
 
     // Cache for 6 hours
