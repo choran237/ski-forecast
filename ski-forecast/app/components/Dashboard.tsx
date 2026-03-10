@@ -118,8 +118,9 @@ function StatBox({ label, value, sub, barPct, barColor }: {
   );
 }
 
-function FlightBox({ airportCode, airportName, departDate, returnDate }: {
+function FlightBox({ airportCode, airportName, departDate, returnDate, onData }: {
   airportCode: string; airportName: string; departDate: string; returnDate: string;
+  onData?: (d: any) => void;
 }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -129,7 +130,11 @@ function FlightBox({ airportCode, airportName, departDate, returnDate }: {
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem(cacheKey);
-      if (stored) setData(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setData(parsed);
+        onData?.(parsed);
+      }
     } catch {}
   }, [cacheKey]);
 
@@ -211,6 +216,7 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
   const { next_3_days, following_4_days, total_7day_snow_cm } = resort.forecast;
   const liftsPercent = Math.round((resort.lifts.open / resort.lifts.total) * 100);
   const resortMeta = RESORTS.find(r => r.id === resort.resort_id);
+  const [flightData, setFlightData] = useState<any>(null);
 
   const router = useRouter();
 
@@ -292,13 +298,15 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
         const pctOfAvg = avg > 0 ? Math.round((current7day / avg) * 100) : 0;
         const depthNow = next_3_days[0]?.snow_depth_cm ?? 0;
         const transitHrs = resortMeta.primary_airport.transit_hours;
+        const flightMins = flightData?.duration_mins ?? null;
+        const totalHrs = flightMins ? ((flightMins / 60) + transitHrs).toFixed(1) : null;
         return (
           <>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
                 <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>BASE</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.mono }}>{depthNow}<span style={{ fontSize: 10, color: t.colors.textMuted }}>cm</span></div>
-                <div style={{ fontSize: 9, color: t.colors.textFaint }}>now · {base}cm avg</div>
+                <div style={{ fontSize: 9, color: t.colors.textFaint }}>live · {base}cm typical</div>
               </div>
               <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
                 <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>SUMMIT</div>
@@ -311,9 +319,13 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
                 <div style={{ fontSize: 9, color: t.colors.textFaint }}>of {avg}cm seasonal</div>
               </div>
               <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
-                <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>TRANSFER</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: transitHrs <= 1.5 ? t.colors.accentGreen : transitHrs <= 2.5 ? t.colors.accentYellow : t.colors.textPrimary, fontFamily: t.fonts.mono }}>{transitHrs}<span style={{ fontSize: 10, color: t.colors.textMuted }}>h</span></div>
-                <div style={{ fontSize: 9, color: t.colors.textFaint }}>{resortMeta.primary_airport.code} → resort</div>
+                <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>DOOR-DOOR</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: !totalHrs ? t.colors.textMuted : parseFloat(totalHrs) <= 4 ? t.colors.accentGreen : parseFloat(totalHrs) <= 6 ? t.colors.accentYellow : t.colors.textPrimary, fontFamily: t.fonts.mono }}>
+                  {totalHrs ? <>{totalHrs}<span style={{ fontSize: 10, color: t.colors.textMuted }}>h</span></> : <span style={{ fontSize: 10, color: t.colors.textMuted }}>{transitHrs}h ground</span>}
+                </div>
+                <div style={{ fontSize: 9, color: t.colors.textFaint }}>
+                  {flightMins ? `${Math.floor(flightMins/60)}h${flightMins%60}m ✈ + ${transitHrs}h 🚗` : "get price for total"}
+                </div>
               </div>
             </div>
             <FlightBox
@@ -321,6 +333,7 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
               airportName={resortMeta.primary_airport.name}
               departDate={departDate}
               returnDate={returnDate}
+              onData={setFlightData}
             />
           </>
         );
