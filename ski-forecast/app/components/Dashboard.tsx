@@ -46,7 +46,7 @@ function StarRating({ score }: { score: number }) {
         <span key={i} style={{ fontSize: 13, color: i <= Math.round(score) ? t.colors.accentYellow : t.colors.borderSubtle }}>★</span>
       ))}
       <span style={{ fontSize: t.fontSize.badge, color: t.colors.textMuted, marginLeft: 4 }}>{score}</span>
-    </div
+    </div>
 
       {/* Password modal for Get All Prices */}
       {showFlightPwModal && (
