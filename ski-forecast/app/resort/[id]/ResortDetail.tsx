@@ -2,7 +2,8 @@
 // app/resort/[id]/ResortDetail.tsx
 
 import { useState, useCallback, useEffect } from "react";
-import { Resort, ResortSnapshot, DayForecast } from "@/lib/resorts";
+import { Resort, ResortSnapshot, DayForecast, SkiPassPrices } from "@/lib/resorts";
+import { Currency, CURRENCY_OPTIONS, formatPrice } from "@/lib/currency";
 import { theme as t } from "@/lib/theme";
 
 const FLAG: Record<string, string> = {
@@ -141,9 +142,9 @@ function temp_color(temp: number): string {
 // ── Airport flight row ────────────────────────────────────────────────────────
 
 function AirportFlightRow({
-  airportCode, airportName, distanceKm, departDate, returnDate, flightData, loading,
+  airportCode, airportName, distanceKm, transitHours, departDate, returnDate, flightData, loading,
 }: {
-  airportCode: string; airportName: string; distanceKm: number;
+  airportCode: string; airportName: string; distanceKm: number; transitHours: number;
   departDate: string; returnDate: string;
   flightData: any; loading: boolean;
 }) {
@@ -212,6 +213,7 @@ export default function ResortDetail({ resort, snapshot }: {
   resort: Resort; snapshot: ResortSnapshot | null;
 }) {
   const [departDate, setDepartDate] = useState(nextFriday());
+  const [displayCurrency, setDisplayCurrency] = useState<Currency>("GBP");
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
   const [flightData, setFlightData] = useState<Record<string, any>>({});
   const [flightsLoading, setFlightsLoading] = useState(false);
@@ -345,12 +347,41 @@ export default function ResortDetail({ resort, snapshot }: {
                   </div>
                 </div>
                 <div style={{ fontSize: t.fontSize.detailValue, fontWeight: 800, color: t.colors.accentYellow, fontFamily: t.fonts.mono }}>
-                  {school.price_per_hour} <span style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, fontWeight: 400 }}>{school.currency}/hr</span>
+                  {formatPrice(school.price_per_hour, school.currency, displayCurrency)}<span style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, fontWeight: 400 }}>/hr</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Ski pass prices */}
+        {resort.ski_pass && (
+          <div>
+            <h2 style={{ margin: "0 0 14px", fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase" }}>
+              🎫 Ski Pass Prices
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+              {[
+                { label: "1 Day", value: resort.ski_pass.day_1 },
+                { label: "3 Days", value: resort.ski_pass.day_3, highlight: true },
+                { label: "6 Days", value: resort.ski_pass.day_6 },
+                { label: "Season", value: resort.ski_pass.season },
+              ].map(({ label, value, highlight }) => (
+                <div key={label} style={{
+                  background: highlight ? "#0a1a10" : t.colors.cardBg,
+                  border: `1px solid ${highlight ? t.colors.accentGreen + "55" : t.colors.borderSubtle}`,
+                  borderRadius: t.card.statRadius, padding: 14, textAlign: "center",
+                }}>
+                  <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6 }}>{label.toUpperCase()}</div>
+                  <div style={{ fontSize: t.fontSize.flightPrice, fontWeight: 800, color: highlight ? t.colors.accentGreen : t.colors.textPrimary, fontFamily: t.fonts.mono }}>
+                    {formatPrice(value, resort.ski_pass.currency, displayCurrency)}
+                  </div>
+                  {highlight && <div style={{ fontSize: 10, color: t.colors.accentGreen, marginTop: 4 }}>most popular</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Flights section */}
         <div>
@@ -375,6 +406,13 @@ export default function ResortDetail({ resort, snapshot }: {
                   style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }}
                 />
               </div>
+              <select
+                value={displayCurrency}
+                onChange={e => setDisplayCurrency(e.target.value as Currency)}
+                style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}
+              >
+                {CURRENCY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
               <button
                 onClick={fetchAllFlights}
                 disabled={flightsLoading}
@@ -399,6 +437,7 @@ export default function ResortDetail({ resort, snapshot }: {
                 airportCode={ap.code}
                 airportName={ap.name}
                 distanceKm={ap.distance_km}
+                transitHours={ap.transit_hours}
                 departDate={departDate}
                 returnDate={returnDate}
                 flightData={flightData[ap.code] ?? null}

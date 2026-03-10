@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ForecastRun, ResortSnapshot } from "@/lib/resorts";
 import { RESORTS } from "@/lib/resorts";
 import { theme as t } from "@/lib/theme";
+import { Currency, CURRENCY_OPTIONS, formatPrice } from "@/lib/currency";
 
 const MAX_HISTORY = 6;
 
@@ -324,11 +325,10 @@ function FavouritesStrip({ latest, favourites, onToggleFav }: {
 
 type Top6Sort = "snow" | "rating" | "lifts";
 
-function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly, onExpand, expanded }: {
+function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly }: {
   latest: ForecastRun; favourites: string[];
   sort: Top6Sort; setSort: (s: Top6Sort) => void;
   favsOnly: boolean; setFavsOnly: (v: boolean | ((b: boolean) => boolean)) => void;
-  onExpand: () => void; expanded: boolean;
 }) {
   let resorts = favsOnly ? latest.resorts.filter(r => favourites.includes(r.resort_id)) : [...latest.resorts];
   resorts = resorts.sort((a, b) => {
@@ -361,13 +361,7 @@ function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly, 
             color: favsOnly ? t.colors.accentYellow : t.colors.tabInactiveText,
             fontSize: t.fontSize.tabLabel, cursor: "pointer", fontFamily: t.fonts.body,
           }}>★ Favs only</button>
-          <button onClick={onExpand} style={{
-            padding: "4px 10px", borderRadius: 8,
-            border: `1px solid ${expanded ? t.colors.accentBlue : t.colors.borderSubtle}`,
-            background: expanded ? "#0a1f35" : "transparent",
-            color: expanded ? t.colors.accentBlue : t.colors.tabInactiveText,
-            fontSize: t.fontSize.tabLabel, cursor: "pointer", fontFamily: t.fonts.body,
-          }}>{expanded ? "▲ Collapse" : "▼ Expand"}</button>
+
         </div>
       </div>
       <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
@@ -402,8 +396,8 @@ function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly, 
 type TableSort = "snow" | "rating" | "lifts" | "depth";
 type TableDir = "asc" | "desc";
 
-function TableView({ latest, prev, favourites, onToggleFav }: {
-  latest: ForecastRun; prev?: ForecastRun; favourites: string[]; onToggleFav: (id: string) => void;
+function TableView({ latest, prev, favourites, onToggleFav, displayCurrency }: {
+  latest: ForecastRun; prev?: ForecastRun; favourites: string[]; onToggleFav: (id: string) => void; displayCurrency: string;
 }) {
   const [sort, setSort] = useState<TableSort>("snow");
   const [dir, setDir] = useState<TableDir>("desc");
@@ -444,7 +438,7 @@ function TableView({ latest, prev, favourites, onToggleFav }: {
             <Th col="depth" label="Depth" />
             <Th col="rating" label="Rating" />
             <Th col="lifts" label="Lifts" />
-            <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Ski School</th>
+            <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Ski School (cheapest)</th>
             <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>Airport</th>
             <th style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, fontSize: t.fontSize.tableHeader, color: t.colors.textMuted, textAlign: "left", background: t.colors.tableHeaderBg }}>★</th>
           </tr>
@@ -479,10 +473,22 @@ function TableView({ latest, prev, favourites, onToggleFav }: {
                   <span style={{ fontSize: 10, color: t.colors.textMuted, marginLeft: 4 }}>({liftsPercent}%)</span>
                 </td>
                 <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
-                  {resortMeta ? <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.accentYellow, fontFamily: t.fonts.mono }}>{resortMeta.ski_schools[0].price_per_hour} {resortMeta.ski_schools[0].currency}/hr</span> : "—"}
+                  {resortMeta ? (
+                    <div>
+                      <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.accentYellow, fontFamily: t.fonts.mono }}>
+                        {formatPrice(resortMeta.ski_schools[0].price_per_hour, resortMeta.ski_schools[0].currency, displayCurrency)}/hr
+                      </span>
+                      <div style={{ fontSize: 10, color: t.colors.textMuted }}>{resortMeta.ski_schools[0].name}</div>
+                    </div>
+                  ) : "—"}
                 </td>
                 <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px`, whiteSpace: "nowrap" }}>
-                  {resortMeta ? <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.textSecondary }}>{resortMeta.primary_airport.code} · {resortMeta.primary_airport.distance_km}km</span> : "—"}
+                  {resortMeta ? (
+                    <div>
+                      <span style={{ fontSize: t.fontSize.tableCell, color: t.colors.textSecondary }}>{resortMeta.primary_airport.code} · {resortMeta.primary_airport.distance_km}km</span>
+                      <div style={{ fontSize: 10, color: t.colors.textMuted }}>🚗 {resortMeta.primary_airport.transit_hours}h transfer</div>
+                    </div>
+                  ) : "—"}
                 </td>
                 <td style={{ padding: `${t.table.cellPaddingV}px ${t.table.cellPaddingH}px` }}>
                   <FavStar isFav={isFav} onToggle={() => onToggleFav(r.resort_id)} />
@@ -548,8 +554,11 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [view, setView] = useState<ViewMode>("cards");
   const [favourites, setFavourites] = useState<string[]>([]);
   const [top6Sort, setTop6Sort] = useState<Top6Sort>("snow");
+  const [displayCurrency, setDisplayCurrency] = useState<Currency>("GBP");
   const [top6FavsOnly, setTop6FavsOnly] = useState(false);
-  const [top6Expanded, setTop6Expanded] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [minLifts, setMinLifts] = useState(0);
+  const [minRating, setMinRating] = useState(0);
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
 
@@ -619,6 +628,13 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
                 <span>Return</span>
                 <input type="date" value={returnDate} min={departDate} onChange={e => setReturnDate(e.target.value)} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 8px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body }} />
               </div>
+              <select
+                value={displayCurrency}
+                onChange={e => setDisplayCurrency(e.target.value as Currency)}
+                style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}
+              >
+                {CURRENCY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
               <a href="/api/export-csv" style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`, background: "transparent", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, textDecoration: "none", fontFamily: t.fonts.body, opacity: latest ? 1 : 0.4 }}>↓ CSV</a>
               <button onClick={refresh} disabled={loading} style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: loading ? t.colors.refreshBtnDisabled : t.colors.refreshBtn, color: loading ? t.colors.textMuted : "#fff", fontSize: t.fontSize.subtext, fontWeight: 600, cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body }}>
                 {loading ? "⟳ Fetching…" : "⟳ Refresh"}
@@ -640,61 +656,87 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
               latest={latest} favourites={favourites}
               sort={top6Sort} setSort={setTop6Sort}
               favsOnly={top6FavsOnly} setFavsOnly={setTop6FavsOnly}
-              onExpand={() => setTop6Expanded(e => !e)} expanded={top6Expanded}
             />
-            <div style={{ display: "flex", gap: 6, background: t.colors.statBg, padding: 4, borderRadius: 10, alignSelf: "flex-start", border: `1px solid ${t.colors.borderSubtle}` }}>
-              <TabBtn v="cards" label="⊞ Cards" />
-              <TabBtn v="table" label="≡ Table" />
+            {/* Filter bar */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ display: "flex", gap: 6, background: t.colors.statBg, padding: 4, borderRadius: 10, border: `1px solid ${t.colors.borderSubtle}` }}>
+                  <TabBtn v="cards" label="⊞ Cards" />
+                  <TabBtn v="table" label="≡ Table" />
+                </div>
+                <button onClick={() => setShowFilters(f => !f)} style={{
+                  padding: "6px 14px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.body,
+                  border: `1px solid ${(showFilters || minLifts > 0 || minRating > 0) ? t.colors.accentBlue : t.colors.borderSubtle}`,
+                  background: (showFilters || minLifts > 0 || minRating > 0) ? "#0a1f35" : "transparent",
+                  color: (showFilters || minLifts > 0 || minRating > 0) ? t.colors.accentBlue : t.colors.tabInactiveText,
+                  fontSize: t.fontSize.tabLabel,
+                }}>
+                  ⚙ Filters{(minLifts > 0 || minRating > 0) ? ` (${[minLifts > 0 ? `${minLifts}+ lifts` : "", minRating > 0 ? `${minRating}+ ★` : ""].filter(Boolean).join(", ")})` : ""}
+                </button>
+                {(minLifts > 0 || minRating > 0) && (
+                  <button onClick={() => { setMinLifts(0); setMinRating(0); }} style={{
+                    padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: t.fonts.body,
+                    border: `1px solid ${t.colors.borderSubtle}`, background: "transparent",
+                    color: t.colors.textMuted, fontSize: t.fontSize.tabLabel,
+                  }}>✕ Clear</button>
+                )}
+              </div>
+              {showFilters && (
+                <div style={{ background: t.colors.statBg, border: `1px solid ${t.colors.borderSubtle}`, borderRadius: 12, padding: "18px 22px", display: "flex", gap: 40, flexWrap: "wrap", alignItems: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 240 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8 }}>MIN LIFTS</span>
+                      <span style={{ fontSize: t.fontSize.detailValue, fontWeight: 700, color: t.colors.accentBlue, fontFamily: t.fonts.mono, minWidth: 40, textAlign: "right" }}>{minLifts === 0 ? "Any" : `${minLifts}+`}</span>
+                    </div>
+                    <input type="range" min={0} max={200} step={10} value={minLifts} onChange={e => setMinLifts(Number(e.target.value))}
+                      style={{ width: "100%", accentColor: t.colors.accentBlue, cursor: "pointer" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: t.colors.textFaint }}>
+                      <span>Any</span><span>50</span><span>100</span><span>150</span><span>200+</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 240 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8 }}>MIN RATING</span>
+                      <span style={{ fontSize: t.fontSize.detailValue, fontWeight: 700, color: t.colors.accentYellow, fontFamily: t.fonts.mono, minWidth: 40, textAlign: "right" }}>{minRating === 0 ? "Any" : `${minRating}★+`}</span>
+                    </div>
+                    <input type="range" min={0} max={5} step={0.1} value={minRating} onChange={e => setMinRating(Number(e.target.value))}
+                      style={{ width: "100%", accentColor: t.colors.accentYellow, cursor: "pointer" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: t.colors.textFaint }}>
+                      <span>Any</span><span>3.0★</span><span>4.0★</span><span>4.5★</span><span>5★</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             {view === "cards" ? (
               <>
-                {top6Expanded && (() => {
-                  let top6Resorts = top6FavsOnly ? latest.resorts.filter(r => favourites.includes(r.resort_id)) : [...latest.resorts];
-                  top6Resorts = top6Resorts.sort((a, b) => {
-                    if (top6Sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
-                    if (top6Sort === "rating") return b.composite_rating - a.composite_rating;
-                    return b.lifts.total - a.lifts.total;
-                  }).slice(0, 6);
-                  return (
-                    <div>
-                      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.accentBlue, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>
-                        🏆 Top 6 — expanded view
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18, marginBottom: 28 }}>
-                        {top6Resorts.map(resort => (
-                          <ResortCard
-                            key={resort.resort_id} resort={resort}
-                            prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
-                            isFav={favourites.includes(resort.resort_id)}
-                            onToggleFav={() => toggleFav(resort.resort_id)}
-                            departDate={departDate} returnDate={returnDate}
-                          />
-                        ))}
-                      </div>
-                      <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>
-                        All resorts
-                      </div>
+                {(() => {
+                  const filtered = [...latest.resorts]
+                    .filter(r => r.lifts.total >= minLifts && r.composite_rating >= minRating)
+                    .sort((a, b) => {
+                      if (top6Sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
+                      if (top6Sort === "rating") return b.composite_rating - a.composite_rating;
+                      return b.lifts.total - a.lifts.total;
+                    });
+                  return filtered.length === 0 ? (
+                    <div style={{ color: t.colors.textMuted, fontSize: t.fontSize.subtext, padding: "20px 0" }}>No resorts match your filters — try lowering the minimums.</div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18 }}>
+                      {filtered.map(resort => (
+                        <ResortCard
+                          key={resort.resort_id} resort={resort}
+                          prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
+                          isFav={favourites.includes(resort.resort_id)}
+                          onToggleFav={() => toggleFav(resort.resort_id)}
+                          departDate={departDate} returnDate={returnDate}
+                        />
+                      ))}
                     </div>
                   );
                 })()}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18 }}>
-                  {[...latest.resorts].sort((a, b) => {
-                    if (top6Sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
-                    if (top6Sort === "rating") return b.composite_rating - a.composite_rating;
-                    return b.lifts.total - a.lifts.total;
-                  }).map(resort => (
-                    <ResortCard
-                      key={resort.resort_id} resort={resort}
-                      prev={previous?.resorts.find(r => r.resort_id === resort.resort_id)}
-                      isFav={favourites.includes(resort.resort_id)}
-                      onToggleFav={() => toggleFav(resort.resort_id)}
-                      departDate={departDate} returnDate={returnDate}
-                    />
-                  ))}
-                </div>
               </>
             ) : (
-              <TableView latest={latest} prev={previous} favourites={favourites} onToggleFav={toggleFav} />
+              <TableView latest={latest} prev={previous} favourites={favourites} onToggleFav={toggleFav} displayCurrency={displayCurrency} />
             )}
             <HistoryPanel history={history} />
             <div style={{ display: "flex", gap: 20, fontSize: t.fontSize.subtext, color: t.colors.textMuted, paddingTop: 10, borderTop: `1px solid ${t.colors.borderSubtle}`, flexWrap: "wrap" }}>
