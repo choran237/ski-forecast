@@ -317,11 +317,6 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
                 <div style={{ fontSize: 9, color: t.colors.textFaint }}>typical max depth</div>
               </div>
               <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
-                <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>VS AVG</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: pctOfAvg >= 100 ? t.colors.accentGreen : pctOfAvg >= 70 ? t.colors.accentYellow : t.colors.accentRed, fontFamily: t.fonts.mono }}>{pctOfAvg}<span style={{ fontSize: 10, color: t.colors.textMuted }}>%</span></div>
-                <div style={{ fontSize: 9, color: t.colors.textFaint }}>of {avg}cm seasonal</div>
-              </div>
-              <div style={{ background: t.colors.statBg, borderRadius: 8, padding: "7px 10px", flex: 1, minWidth: 80 }}>
                 <div style={{ fontSize: 9, color: t.colors.textMuted, letterSpacing: 0.8, textTransform: "uppercase" }}>DOOR-DOOR</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: parseFloat(totalHrs) <= 4 ? t.colors.accentGreen : parseFloat(totalHrs) <= 6 ? t.colors.accentYellow : t.colors.textPrimary, fontFamily: t.fonts.mono }}>
                   {totalHrs}<span style={{ fontSize: 10, color: t.colors.textMuted }}>h</span>
