@@ -131,16 +131,6 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
   const [loading, setLoading] = useState(false);
   const [flightsLoading, setFlightsLoading] = useState(false);
   const [flightsDone, setFlightsDone] = useState(0);
-  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
-  const [flightPwInput, setFlightPwInput] = useState("");
-  const [flightPwError, setFlightPwError] = useState(false);
-  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
-  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
-  const [flightPwInput, setFlightPwInput] = useState("");
-  const [flightPwError, setFlightPwError] = useState(false);
-  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [error, setError] = useState<string | null>(null);
   const cacheKey = `flight:${airportCode}:${departDate}:${returnDate}`;
 
@@ -637,11 +627,6 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [loading, setLoading] = useState(false);
   const [flightsLoading, setFlightsLoading] = useState(false);
   const [flightsDone, setFlightsDone] = useState(0);
-  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
-  const [flightPwInput, setFlightPwInput] = useState("");
-  const [flightPwError, setFlightPwError] = useState(false);
-  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [showFlightPwModal, setShowFlightPwModal] = useState(false);
   const [flightPwInput, setFlightPwInput] = useState("");
   const [flightPwError, setFlightPwError] = useState(false);
