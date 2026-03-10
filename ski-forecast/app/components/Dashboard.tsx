@@ -46,7 +46,8 @@ function StarRating({ score }: { score: number }) {
         <span key={i} style={{ fontSize: 13, color: i <= Math.round(score) ? t.colors.accentYellow : t.colors.borderSubtle }}>★</span>
       ))}
       <span style={{ fontSize: t.fontSize.badge, color: t.colors.textMuted, marginLeft: 4 }}>{score}</span>
-    </div>
+    </div
+
       {/* Password modal for Get All Prices */}
       {showFlightPwModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
@@ -296,6 +297,11 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
   const [loading, setLoading] = useState(false);
   const [flightsLoading, setFlightsLoading] = useState(false);
   const [flightsDone, setFlightsDone] = useState(0);
+  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
+  const [flightPwInput, setFlightPwInput] = useState("");
+  const [flightPwError, setFlightPwError] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [showFlightPwModal, setShowFlightPwModal] = useState(false);
   const [flightPwInput, setFlightPwInput] = useState("");
   const [flightPwError, setFlightPwError] = useState(false);
@@ -1000,6 +1006,11 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [flightPwError, setFlightPwError] = useState(false);
   const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
   const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
+  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
+  const [flightPwInput, setFlightPwInput] = useState("");
+  const [flightPwError, setFlightPwError] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("cards");
@@ -1349,6 +1360,41 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
             <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
             <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
               ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
+            </div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input
+              autoFocus
+              type="password"
+              value={flightPwInput}
+              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                  else setFlightPwError(true);
+                }
+              }}
+              placeholder="Password"
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
+            />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => {
+                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
+                else setFlightPwError(true);
+              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+  );
+      {/* Password modal for Get All Prices */}
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
+              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.
             </div>
             <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
             <input
