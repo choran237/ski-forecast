@@ -50,7 +50,6 @@ function StarRating({ score }: { score: number }) {
   );
 }
 
-
 function FavStar({ isFav, onToggle }: { isFav: boolean; onToggle: () => void }) {
   return (
     <button
@@ -62,7 +61,6 @@ function FavStar({ isFav, onToggle }: { isFav: boolean; onToggle: () => void }) 
         lineHeight: 1, transition: "color 0.2s",
       }}
     >★</button>
-
   );
 }
 
@@ -83,7 +81,6 @@ function SnowBar({ days, color }: { days: any[]; color: string }) {
         </div>
       ))}
     </div>
-
   );
 }
 
@@ -101,7 +98,6 @@ function Delta({ current, previous }: { current: string; previous?: string }) {
     }}>
       {zero ? "—" : `${diff > 0 ? "▲" : "▼"} ${abs} cm`}
     </span>
-
   );
 }
 
@@ -119,7 +115,6 @@ function StatBox({ label, value, sub, barPct, barColor }: {
         </div>
       )}
     </div>
-
   );
 }
 
@@ -164,16 +159,11 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
   return (
     <div style={{ background: t.colors.flightBg, border: `1px solid ${t.colors.flightBorder}`, borderRadius: t.card.statRadius, padding: t.card.statPadding }}>
       <div style={{ fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span>✈ FLIGHTS · {data?.departure ?? "LHR"} → {airportCode}</span>
+        <span>✈ FLIGHTS · LHR → {airportCode}</span>
         <span style={{ color: t.colors.textFaint, fontFamily: t.fonts.mono }}>
           {formatDuration(data?.duration_mins ?? defaultFlightMins ?? null)}
         </span>
       </div>
-      {data?.cheaper_alt && (
-        <div style={{ fontSize: 9, color: t.colors.accentYellow, marginBottom: 4 }}>
-          💡 {data.cheaper_alt.departure} is £{data.cheaper_alt.saving} cheaper
-        </div>
-      )}
       {data ? (
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -214,8 +204,23 @@ function FlightBox({ airportCode, airportName, departDate, returnDate, onData, d
           fontSize: t.fontSize.flightSub, textDecoration: "none", display: "flex", alignItems: "center",
         }}>Sky ↗</a>
       </div>
-    </div>
 
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -228,6 +233,17 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
   const liftsPercent = Math.round((resort.lifts.open / resort.lifts.total) * 100);
   const resortMeta = RESORTS.find(r => r.id === resort.resort_id);
   const [flightData, setFlightData] = useState<any>(null);
+
+  const fetchAllFlights = async () => {
+    const airports = [...new Set(RESORTS.map(r => r.primary_airport.code))];
+    setFlightsLoading(true); setFlightsDone(0);
+    for (const code of airports) {
+      await fetch(`/api/flights?airport=${code}&depart=${departDate}&return=${returnDate}`);
+      setFlightsDone(n => n + 1);
+      await new Promise(res => setTimeout(res, 300));
+    }
+    setFlightsLoading(false);
+  };
 
   const router = useRouter();
 
@@ -351,7 +367,6 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
         );
       })()}
     </div>
-
   );
 }
 
@@ -385,8 +400,23 @@ function FavouritesStrip({ latest, favourites, onToggleFav }: {
           </div>
         ))}
       </div>
-    </div>
 
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -456,8 +486,23 @@ function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly }
           <div style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted, padding: "10px 0" }}>No favourites yet</div>
         )}
       </div>
-    </div>
 
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -571,7 +616,6 @@ function TableView({ latest, prev, favourites, onToggleFav, displayCurrency }: {
         </tbody>
       </table>
     </div>
-
   );
 }
 
@@ -613,8 +657,23 @@ function HistoryPanel({ history }: { history: ForecastRun[] }) {
           </div>
         ))}
       </div>
-    </div>
 
+      {showFlightPwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
+            <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
+            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
+            {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -623,13 +682,6 @@ type ViewMode = "cards" | "table";
 export default function Dashboard({ initialHistory }: { initialHistory: ForecastRun[] }) {
   const [history, setHistory] = useState<ForecastRun[]>(initialHistory);
   const [loading, setLoading] = useState(false);
-  const [flightsLoading, setFlightsLoading] = useState(false);
-  const [flightsDone, setFlightsDone] = useState(0);
-  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
-  const [flightPwInput, setFlightPwInput] = useState("");
-  const [flightPwError, setFlightPwError] = useState(false);
-  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("cards");
@@ -645,6 +697,13 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
   const [maxFlightHours, setMaxFlightHours] = useState(0);
   const [departDate, setDepartDate] = useState(nextFriday());
   const [returnDate, setReturnDate] = useState(() => sundayAfter(nextFriday()));
+  const [flightsLoading, setFlightsLoading] = useState(false);
+  const [flightsDone, setFlightsDone] = useState(0);
+  const [showFlightPwModal, setShowFlightPwModal] = useState(false);
+  const [flightPwInput, setFlightPwInput] = useState("");
+  const [flightPwError, setFlightPwError] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState<"depart"|"return"|null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }; });
 
   // On mount, always fetch fresh history so deltas are correct on first load
   useEffect(() => {
@@ -684,27 +743,6 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
     finally { setLoading(false); }
   }, []);
 
-  const fetchAllFlights = useCallback(async () => {
-    if (!departDate || !returnDate) return;
-    setFlightsLoading(true); setFlightsDone(0);
-    const airports = [...new Set(RESORTS.map(r => r.primary_airport.code))];
-    for (let i = 0; i < airports.length; i++) {
-      const code = airports[i];
-      try {
-        const res = await fetch(`/api/flights?airport=${code}&depart=${departDate}&return=${returnDate}`);
-        const json = await res.json();
-        if (json.ok) {
-          try { sessionStorage.setItem(`flight:${code}:${departDate}:${returnDate}`, JSON.stringify(json)); } catch {}
-        }
-      } catch {}
-      setFlightsDone(i + 1);
-      await new Promise(r => setTimeout(r, 300));
-    }
-    setFlightsLoading(false);
-    // Force re-render so FlightBoxes pick up new sessionStorage data
-    setHistory(h => [...h]);
-  }, [departDate, returnDate]);
-
   const latest = history[0];
   const previous = history[1];
 
@@ -737,55 +775,34 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: t.fontSize.subtext, color: t.colors.textMuted, position: "relative" }}>
                 <span>✈ Depart</span>
-                <button onClick={() => { const d = new Date(departDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(t2 => t2 === "depart" ? null : "depart"); }} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer", minWidth: 100 }}>
-                  📅 {departDate ? new Date(departDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "Pick date"}
-                </button>
+                <button onClick={e => { e.stopPropagation(); setCalendarTarget(calendarTarget === "depart" ? null : "depart"); setCalendarMonth(() => { const d = new Date(departDate); return { year: d.getFullYear(), month: d.getMonth() }; }); }} style={{ background: t.colors.cardBg, border: `1px solid ${calendarTarget === "depart" ? t.colors.accentBlue : t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>{departDate}</button>
                 <span>Return</span>
-                <button onClick={() => { const d = new Date(returnDate); setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() }); setCalendarTarget(t2 => t2 === "return" ? null : "return"); }} style={{ background: t.colors.cardBg, border: `1px solid ${t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer", minWidth: 100 }}>
-                  📅 {returnDate ? new Date(returnDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "Pick date"}
-                </button>
+                <button onClick={e => { e.stopPropagation(); setCalendarTarget(calendarTarget === "return" ? null : "return"); setCalendarMonth(() => { const d = new Date(returnDate); return { year: d.getFullYear(), month: d.getMonth() }; }); }} style={{ background: t.colors.cardBg, border: `1px solid ${calendarTarget === "return" ? t.colors.accentBlue : t.colors.borderActive}`, borderRadius: 8, padding: "5px 10px", color: t.colors.textPrimary, fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>{returnDate}</button>
                 {calendarTarget && (() => {
                   const { year, month } = calendarMonth;
                   const firstDay = new Date(year, month, 1).getDay();
                   const daysInMonth = new Date(year, month + 1, 0).getDate();
-                  const blanks = (firstDay + 6) % 7;
-                  const today = new Date(); today.setHours(0,0,0,0);
-                  const selected = calendarTarget === "depart" ? departDate : returnDate;
-                  const minDate = calendarTarget === "return" ? departDate : undefined;
-                  const monthName = new Date(year, month).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-                  const cells = [];
-                  for (let i = 0; i < blanks; i++) cells.push(null);
-                  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+                  const cells: (number|null)[] = [...Array(firstDay).fill(null), ...Array.from({length: daysInMonth}, (_,i) => i+1)];
+                  while (cells.length % 7 !== 0) cells.push(null);
+                  const monthName = new Date(year, month).toLocaleString("default", { month: "long", year: "numeric" });
+                  const today = new Date().toISOString().split("T")[0];
                   return (
-                    <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "110%", left: 0, zIndex: 100, background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 12, padding: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 280 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16, padding: "2px 8px" }}>‹</button>
-                        <span style={{ color: "#e2e8f0", fontWeight: 600, fontSize: 13 }}>{monthName}</span>
-                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16, padding: "2px 8px" }}>›</button>
+                    <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "110%", left: 0, zIndex: 100, background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 12, padding: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 260 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16 }}>‹</button>
+                        <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{monthName}</span>
+                        <button onClick={() => setCalendarMonth(m => { const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() }; })} style={{ background: "none", border: "none", color: "#7ba7cc", cursor: "pointer", fontSize: 16 }}>›</button>
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 6 }}>
-                        {["Mo","Tu","We","Th","Fr","Sa","Su"].map(d => <div key={d} style={{ textAlign: "center", fontSize: 10, color: "#4a6a8a", padding: "2px 0", fontWeight: 600 }}>{d}</div>)}
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, textAlign: "center" }}>
+                        {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => <div key={d} style={{ fontSize: 10, color: "#7ba7cc", padding: "2px 0" }}>{d}</div>)}
                         {cells.map((day, i) => {
                           if (!day) return <div key={i} />;
-                          const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-                          const cellDate = new Date(year, month, day);
-                          const isPast = cellDate < today;
-                          const isBeforeMin = minDate && dateStr < minDate;
-                          const isSelected = dateStr === selected;
-                          const isInRange = departDate && returnDate && dateStr > departDate && dateStr < returnDate;
-                          const disabled = isPast || isBeforeMin;
+                          const iso = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+                          const isSelected = iso === (calendarTarget === "depart" ? departDate : returnDate);
+                          const inRange = iso > departDate && iso < returnDate;
+                          const isPast = iso < today;
                           return (
-                            <button key={i} disabled={!!disabled} onClick={() => {
-                              if (calendarTarget === "depart") { setDepartDate(dateStr); if (returnDate && dateStr >= returnDate) setReturnDate(""); }
-                              else setReturnDate(dateStr);
-                              setCalendarTarget(null);
-                            }} style={{ padding: "6px 0", borderRadius: 6, border: "none", textAlign: "center", fontSize: 12, cursor: disabled ? "default" : "pointer", fontFamily: "inherit",
-                              background: isSelected ? "#3b82f6" : isInRange ? "#1e3a5f" : "transparent",
-                              color: disabled ? "#2a4060" : isSelected ? "#fff" : "#c8dff0",
-                              fontWeight: isSelected ? 700 : 400,
-                            }}>{day}</button>
+                            <div key={i} onClick={() => { if (isPast) return; if (calendarTarget === "depart") { setDepartDate(iso); if (iso >= returnDate) setReturnDate(sundayAfter(iso)); } else { if (iso > departDate) setReturnDate(iso); } setCalendarTarget(null); }} style={{ padding: "4px 2px", borderRadius: 4, fontSize: 12, cursor: isPast ? "default" : "pointer", background: isSelected ? "#1d6fa4" : inRange ? "#0d3a5c" : "transparent", color: isPast ? "#3a5070" : isSelected ? "#fff" : "#c8dff0", fontWeight: isSelected ? 700 : 400 }}>{day}</div>
                           );
                         })}
                       </div>
@@ -800,12 +817,14 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
               >
                 {CURRENCY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
+              {flightsLoading ? (
+                <span style={{ fontSize: t.fontSize.subtext, color: t.colors.textMuted }}>Fetching prices… {flightsDone}/{[...new Set(RESORTS.map(r => r.primary_airport.code))].length}</span>
+              ) : (
+                <button onClick={() => setShowFlightPwModal(true)} style={{ background: "#0a3a1a", border: "1px solid #1a6a3a", borderRadius: 8, padding: "5px 12px", color: "#4ade80", fontSize: t.fontSize.subtext, fontFamily: t.fonts.body, cursor: "pointer" }}>✈ Get All Prices</button>
+              )}
               <a href="/api/export-csv" style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${t.colors.borderActive}`, background: "transparent", color: t.colors.textSecondary, fontSize: t.fontSize.subtext, textDecoration: "none", fontFamily: t.fonts.body, opacity: latest ? 1 : 0.4 }}>↓ CSV</a>
               <button onClick={refresh} disabled={loading} style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: loading ? t.colors.refreshBtnDisabled : t.colors.refreshBtn, color: loading ? t.colors.textMuted : "#fff", fontSize: t.fontSize.subtext, fontWeight: 600, cursor: loading ? "wait" : "pointer", fontFamily: t.fonts.body }}>
                 {loading ? "⟳ Fetching…" : "⟳ Refresh"}
-              </button>
-              <button onClick={() => { setFlightPwInput(""); setFlightPwError(false); setShowFlightPwModal(true); }} disabled={flightsLoading} style={{ padding: "7px 18px", borderRadius: 8, border: "1px solid #4ade8040", background: flightsLoading ? t.colors.refreshBtnDisabled : "#0a4a2a", color: flightsLoading ? t.colors.textMuted : "#4ade80", fontSize: t.fontSize.subtext, fontWeight: 600, cursor: flightsLoading ? "wait" : "pointer", fontFamily: t.fonts.body }}>
-                {flightsLoading ? `✈ ${flightsDone}/${[...new Set(RESORTS.map(r => r.primary_airport.code))].length}…` : "✈ Get All Prices"}
               </button>
             </div>
           </div>
@@ -972,36 +991,17 @@ export default function Dashboard({ initialHistory }: { initialHistory: Forecast
         )}
       </div>
 
-      {/* Password modal for Get All Prices */}
       {showFlightPwModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowFlightPwModal(false)}>
           <div onClick={e => e.stopPropagation()} style={{ background: "#0d1f35", border: "1px solid #2a4060", borderRadius: 16, padding: 28, width: 340, boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>✈ Get All Flight Prices</div>
-            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>
-              ⚠️ This will use ~23 SerpApi calls from your 250/month free tier limit. Use sparingly.
-            </div>
+            <div style={{ fontSize: 12, color: "#f59e0b", background: "#2a1a00", border: "1px solid #f59e0b40", borderRadius: 8, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5 }}>⚠️ This will use ~23 SerpApi calls from your 250/month free tier. Use sparingly.</div>
             <div style={{ fontSize: 12, color: "#7ba7cc", marginBottom: 8 }}>Enter password to continue:</div>
-            <input
-              autoFocus
-              type="password"
-              value={flightPwInput}
-              onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }}
-              onKeyDown={e => {
-                if (e.key === "Enter") {
-                  if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
-                  else setFlightPwError(true);
-                }
-              }}
-              placeholder="Password"
-              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }}
-            />
+            <input autoFocus type="password" value={flightPwInput} onChange={e => { setFlightPwInput(e.target.value); setFlightPwError(false); }} onKeyDown={e => { if (e.key === "Enter") { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); } }} placeholder="Password" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${flightPwError ? "#ef4444" : "#2a4060"}`, background: "#071422", color: "#e2e8f0", fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", marginBottom: 6 }} />
             {flightPwError && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Incorrect password</div>}
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button onClick={() => setShowFlightPwModal(false)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid #2a4060", background: "transparent", color: "#7ba7cc", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={() => {
-                if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); }
-                else setFlightPwError(true);
-              }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
+              <button onClick={() => { if (flightPwInput === "choran237") { setShowFlightPwModal(false); fetchAllFlights(); } else setFlightPwError(true); }} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "#0a4a2a", color: "#4ade80", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Confirm</button>
             </div>
           </div>
         </div>
