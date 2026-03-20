@@ -393,6 +393,7 @@ function ResortCard({ resort, prev, isFav, onToggleFav, departDate, returnDate, 
 function FavouritesStrip({ latest, favourites, onToggleFav }: {
   latest: ForecastRun; favourites: string[]; onToggleFav: (id: string) => void;
 }) {
+  const router = useRouter();
   const favResorts = latest.resorts.filter(r => favourites.includes(r.resort_id));
   if (favResorts.length === 0) return null;
   return (
@@ -402,10 +403,11 @@ function FavouritesStrip({ latest, favourites, onToggleFav }: {
       </div>
       <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
         {favResorts.map(r => (
-          <div key={r.resort_id} style={{
+          <div key={r.resort_id} onClick={() => router.push(`/resort/${r.resort_id}`)} style={{
             minWidth: t.favStrip.cardWidth, background: t.colors.cardBg,
             border: `1px solid ${t.colors.accentYellow}44`, borderRadius: t.favStrip.cardRadius,
             padding: t.favStrip.cardPadding, display: "flex", flexDirection: "column", gap: 4,
+            cursor: "pointer",
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: t.fontSize.favStrip, fontWeight: 700, color: t.colors.textPrimary, fontFamily: t.fonts.heading }}>
@@ -431,6 +433,7 @@ function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly }
   sort: Top6Sort; setSort: (s: Top6Sort) => void;
   favsOnly: boolean; setFavsOnly: (v: boolean | ((b: boolean) => boolean)) => void;
 }) {
+  const router = useRouter();
   let resorts = favsOnly ? latest.resorts.filter(r => favourites.includes(r.resort_id)) : [...latest.resorts];
   resorts = resorts.sort((a, b) => {
     if (sort === "snow") return parseFloat(b.forecast.total_7day_snow_cm) - parseFloat(a.forecast.total_7day_snow_cm);
@@ -467,11 +470,12 @@ function Top6Widget({ latest, favourites, sort, setSort, favsOnly, setFavsOnly }
       </div>
       <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
         {resorts.map((r, i) => (
-          <div key={r.resort_id} style={{
+          <div key={r.resort_id} onClick={() => router.push(`/resort/${r.resort_id}`)} style={{
             minWidth: t.top6.cardWidth, background: t.colors.cardBg,
             border: `1px solid ${i === 0 ? t.colors.accentBlue + "55" : t.colors.borderSubtle}`,
             borderRadius: t.top6.cardRadius, padding: t.top6.cardPadding,
             display: "flex", flexDirection: "column", gap: 6,
+            cursor: "pointer",
           }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span style={{ fontSize: t.top6.rankSize, fontWeight: 700, color: i === 0 ? t.colors.accentYellow : t.colors.textMuted, fontFamily: t.fonts.mono }}>#{i+1}</span>
