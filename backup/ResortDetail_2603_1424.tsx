@@ -67,7 +67,7 @@ function StarRating({ score }: { score: number }) {
   );
 }
 
-// ── 10-day forecast card ──────────────────────────────────────────────────────
+// ── 7-day forecast card ───────────────────────────────────────────────────────
 
 function ForecastDay({ day, isFirst }: { day: DayForecast; isFirst: boolean }) {
   const cond = weatherCondition(day);
@@ -449,11 +449,11 @@ export default function ResortDetail({ resort, snapshot }: {
           </div>
         )}
 
-        {/* 10-day forecast */}
+        {/* 7-day forecast */}
         {snapshot && (
           <div>
             <h2 style={{ margin: "0 0 14px", fontSize: t.fontSize.sectionLabel, color: t.colors.textMuted, letterSpacing: 1.5, textTransform: "uppercase" }}>
-              10-Day Forecast
+              7-Day Forecast
             </h2>
             <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
               {allDays.map((day, i) => (
