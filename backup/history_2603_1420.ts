@@ -23,9 +23,9 @@ function runsAreIdentical(a: ForecastRun, b: ForecastRun): boolean {
   for (const resortA of a.resorts) {
     const resortB = b.resorts.find(r => r.resort_id === resortA.resort_id);
     if (!resortB) return false;
-    if (resortA.forecast.total_10day_snow_cm !== resortB.forecast.total_10day_snow_cm) return false;
-    const daysA = [...resortA.forecast.next_3_days, ...resortA.forecast.following_7_days];
-    const daysB = [...resortB.forecast.next_3_days, ...resortB.forecast.following_7_days];
+    if (resortA.forecast.total_7day_snow_cm !== resortB.forecast.total_7day_snow_cm) return false;
+    const daysA = [...resortA.forecast.next_3_days, ...resortA.forecast.following_4_days];
+    const daysB = [...resortB.forecast.next_3_days, ...resortB.forecast.following_4_days];
     for (let i = 0; i < daysA.length; i++) {
       if (daysA[i].snowfall_cm !== daysB[i].snowfall_cm) return false;
       if (daysA[i].snow_depth_cm !== daysB[i].snow_depth_cm) return false;
